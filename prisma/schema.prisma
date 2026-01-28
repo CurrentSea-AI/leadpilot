@@ -1,0 +1,182 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  // Use PostgreSQL for production (Vercel/Neon), SQLite for local dev
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Status {
+  NEW
+  AUDITED
+  DRAFTED
+  SENT
+  REPLIED
+  WON
+  LOST
+}
+
+enum ContactMethod {
+  EMAIL
+  CONTACT_FORM
+  IG_DM
+  PHONE
+  OTHER
+}
+
+enum AuditType {
+  DESIGN
+  SEO
+}
+
+enum SubscriptionTier {
+  FREE
+  PRO
+  AGENCY
+}
+
+// User model for multi-tenancy
+model User {
+  id              String           @id @default(cuid())
+  createdAt       DateTime         @default(now())
+  clerkId         String           @unique // Clerk user ID
+  email           String           @unique
+  name            String?
+  tier            SubscriptionTier @default(FREE)
+  stripeCustomerId String?         @unique
+  
+  // Usage tracking
+  prospectsUsed   Int              @default(0)
+  prospectsReset  DateTime         @default(now()) // Monthly reset date
+  
+  // Relations
+  leads           Lead[]
+  niches          Niche[]
+}
+
+// Custom niches per user
+model Niche {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  userId          String
+  slug            String   // e.g., "dental_practice"
+  displayName     String   // e.g., "Dental Practice"
+  searchTerms     String   // JSON array of search terms
+  auditCriteria   String   // JSON: industry-specific audit criteria
+  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, slug])
+}
+
+// Pre-defined niche templates (global, not user-specific)
+model NicheTemplate {
+  id              String   @id @default(cuid())
+  slug            String   @unique // e.g., "medical_office"
+  displayName     String   // e.g., "Medical Office"
+  icon            String   // Emoji or icon identifier
+  searchTerms     String   // JSON array of search terms
+  auditCriteria   String   // JSON: industry-specific audit criteria
+  isActive        Boolean  @default(true)
+}
+
+model Lead {
+  id              String         @id @default(cuid())
+  createdAt       DateTime       @default(now())
+  userId          String?        // Optional for backwards compat, required for new leads
+  niche           String         @default("medical_office")
+  city            String?
+  name            String
+  websiteUrl      String
+  phone           String?
+  email           String?
+  address         String?
+  source          String         @default("manual")
+  status          Status         @default(NEW)
+  recipientName   String?        // Contact person's name for personalized outreach
+  // Outreach tracking
+  lastContactedAt DateTime?      // When the lead was last contacted
+  nextFollowUpAt  DateTime?      // When to follow up next
+  contactMethod   ContactMethod? // How the lead was contacted
+  notes           String?        // Notes about the outreach
+
+  // Relations
+  user          User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  audit         Audit?         // Legacy: kept for backwards compat (design audit)
+  designAudit   DesignAudit?
+  seoAudit      SeoAudit?
+  outreachDraft OutreachDraft?
+  reports       Report[]
+}
+
+// Legacy Audit model - kept for backwards compatibility
+model Audit {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  leadId        String   @unique
+  score         Int
+  confidence    Int      @default(3)
+  findingsJson  String
+  extractedJson String
+  error         String?
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+}
+
+// Design Audit - UX, CTAs, mobile, trust signals
+model DesignAudit {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  leadId        String   @unique
+  score         Int      // 1-100
+  findingsJson  String   // Array of { category, issue, impact, recommendation }
+  extractedJson String   // Raw data extracted
+  error         String?
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+}
+
+// SEO Audit - Technical SEO checks
+model SeoAudit {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  leadId        String   @unique
+  score         Int      // 1-100
+  findingsJson  String   // Array of { category, issue, impact, recommendation }
+  extractedJson String   // Raw data extracted
+  error         String?
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+}
+
+// Shareable Report
+model Report {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  leadId      String
+  type        String   // "design", "seo", or "full"
+  publicId    String   @unique @default(cuid()) // For public sharing URL
+  dataJson    String   // Snapshot of audit data at time of report generation
+  viewed      Boolean  @default(false)
+  viewedAt    DateTime?
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+}
+
+model OutreachDraft {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  leadId       String   @unique
+  // Legacy fields (kept for backwards compatibility)
+  email1       String   @default("")
+  followUp1    String   @default("")
+  followUp2    String   @default("")
+  dmVersion    String   @default("")
+  // New: JSON containing both audience versions
+  // Structure: { owner: { email1, followUp1, followUp2, dm }, front_desk: { email1, followUp1, followUp2, dm } }
+  versionsJson String   @default("{}")
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+}

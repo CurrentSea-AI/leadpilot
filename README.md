@@ -1,36 +1,182 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LeadPilot 🚀
 
-## Getting Started
+**AI-Powered Prospecting & Outreach Automation**
 
-First, run the development server:
+Find businesses, audit their websites, and generate personalized outreach — all on autopilot.
 
+![LeadPilot](https://via.placeholder.com/800x400?text=LeadPilot+Dashboard)
+
+## ✨ Features
+
+### 🎯 Multi-Niche Support
+Works for any service business:
+- 🏥 Medical Offices
+- 🦷 Dental Practices
+- ⚖️ Law Firms
+- 🍽️ Restaurants
+- 💪 Gyms & Fitness
+- 💇 Salons & Spas
+- 🏠 Real Estate
+- 🔧 Home Services
+- And more...
+
+### 🤖 AI-Powered Automation
+- **Auto Prospecting**: Enter a city + niche, get audited leads
+- **Vision AI Audits**: GPT-4o analyzes actual screenshots
+- **Design & SEO Scoring**: Industry-specific criteria (0-100)
+- **Personalized Emails**: AI writes custom outreach based on findings
+
+### 📊 Shareable Reports
+- Beautiful, branded audit reports
+- Unique shareable links for each prospect
+- Track when reports are viewed
+
+### 💳 SaaS Subscriptions
+- Clerk authentication
+- Stripe billing integration
+- Three tiers: Free, Pro, Agency
+- Usage tracking and limits
+
+## 🚀 Quick Start
+
+### 1. Install Dependencies
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Configure Environment
+```bash
+cp .env.example .env.local
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Fill in your API keys:
+- **OpenAI**: For AI audits and email generation
+- **Clerk**: For authentication
+- **Stripe**: For billing (optional)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 3. Initialize Database
+```bash
+npx prisma db push
+npx prisma generate
+```
 
-## Learn More
+### 4. Start Development Server
+```bash
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+Visit [http://localhost:3000](http://localhost:3000)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📁 Project Structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+app/
+├── page.tsx              # Marketing landing page
+├── layout.tsx            # Root layout with nav
+├── dashboard/            # User dashboard
+├── auto/                 # Auto prospecting page
+├── assistant/            # Single URL processing
+├── leads/                # Lead management
+├── billing/              # Subscription management
+├── report/[publicId]/    # Shareable reports
+├── (auth)/               # Clerk auth pages
+└── api/
+    ├── ai/               # AI endpoints
+    │   ├── find/         # Auto-find businesses
+    │   ├── audit/        # Vision AI audit
+    │   ├── draft/        # Email generation
+    │   └── batch/        # Batch processing
+    ├── billing/          # Stripe checkout/portal
+    ├── leads/            # Lead CRUD
+    ├── report/           # Report generation
+    ├── user/             # User data
+    └── webhooks/         # Stripe webhooks
+```
 
-## Deploy on Vercel
+## 💰 Pricing Tiers
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Feature | Free | Pro ($29/mo) | Agency ($99/mo) |
+|---------|------|--------------|-----------------|
+| Prospects/month | 5 | 100 | Unlimited |
+| Design Audit | ✅ | ✅ | ✅ |
+| SEO Audit | ❌ | ✅ | ✅ |
+| AI Emails | ❌ | ✅ | ✅ |
+| Branded Reports | ❌ | ✅ | ✅ |
+| API Access | ❌ | ❌ | ✅ |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🔧 Setup Guide
+
+### Clerk (Authentication)
+1. Create account at [clerk.com](https://clerk.com)
+2. Create a new application
+3. Copy API keys to `.env.local`
+4. Configure redirect URLs
+
+### Stripe (Billing)
+1. Create account at [stripe.com](https://stripe.com)
+2. Create two Products:
+   - Pro ($29/mo)
+   - Agency ($99/mo)
+3. Copy Price IDs and API keys to `.env.local`
+4. Set up webhook endpoint: `https://yourdomain.com/api/webhooks/stripe`
+5. Select events: `checkout.session.completed`, `customer.subscription.*`
+
+### OpenAI (AI Features)
+1. Get API key from [platform.openai.com](https://platform.openai.com)
+2. Ensure you have access to GPT-4o
+3. Add key to `.env.local`
+
+## 🎨 Design System
+
+LeadPilot uses a custom dark theme with:
+- **Primary**: Indigo gradient (#6366f1 → #8b5cf6)
+- **Background**: Deep navy (#0f0f23)
+- **Cards**: Semi-transparent with subtle borders
+- **Accents**: Cyan for actions, gradient text for emphasis
+
+## 📝 API Usage
+
+### Find Prospects
+```bash
+POST /api/ai/find
+{
+  "city": "Austin",
+  "state": "TX",
+  "niche": "dental_practice",
+  "limit": 5
+}
+```
+
+### Run AI Audit
+```bash
+POST /api/ai/audit
+{
+  "url": "https://example-dental.com",
+  "niche": "dental_practice"
+}
+```
+
+### Generate Report
+```bash
+POST /api/report
+{
+  "leadId": "clxxx..."
+}
+```
+
+## 🚧 Roadmap
+
+- [ ] Team accounts for Agency tier
+- [ ] White-label report branding
+- [ ] Email sending integration (SendGrid/Resend)
+- [ ] CRM integrations (HubSpot, Pipedrive)
+- [ ] Chrome extension for quick audits
+- [ ] Mobile app
+
+## 📄 License
+
+MIT License - use it for your business!
+
+---
+
+Built with ❤️ using Next.js, Prisma, Clerk, Stripe, and OpenAI
