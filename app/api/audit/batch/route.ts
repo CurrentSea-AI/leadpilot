@@ -314,7 +314,7 @@ export async function POST(request: NextRequest) {
     const leads = await prisma.lead.findMany({
       where: {
         id: { in: leadIds },
-        websiteUrl: { not: null },
+        NOT: { websiteUrl: null },
       },
       select: { id: true, websiteUrl: true },
     });
