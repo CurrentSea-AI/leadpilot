@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
       if (!validation.success) {
         errors.push({
           row: rowNumber,
-          message: validation.error.errors.map((e) => e.message).join(", "),
+          message: validation.error.issues.map((e) => e.message).join(", "),
         });
         continue;
       }
