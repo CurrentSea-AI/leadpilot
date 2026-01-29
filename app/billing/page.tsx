@@ -1,7 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+
+// Force dynamic rendering since we use useSearchParams
+export const dynamic = "force-dynamic";
 
 type UserData = {
   tier: string;
