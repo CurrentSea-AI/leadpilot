@@ -1,6 +1,21 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function LandingPage() {
+  const [url, setUrl] = useState("");
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  const handleGetStarted = () => {
+    if (!url.trim()) return;
+    setLoading(true);
+    // Redirect to assistant with the URL pre-filled
+    router.push(`/assistant?url=${encodeURIComponent(url.trim())}`);
+  };
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -17,55 +32,76 @@ export default function LandingPage() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
               </span>
-              AI-Powered Prospecting
+              AI-Powered Website Audits
             </div>
 
             {/* Headline */}
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
-              <span className="text-white">Find Clients on</span>
+              <span className="text-white">Audit Any Website</span>
               <br />
-              <span className="gradient-text">Complete Autopilot</span>
+              <span className="gradient-text">In Seconds</span>
             </h1>
 
             {/* Subheadline */}
             <p className="text-xl text-slate-400 max-w-2xl mx-auto mb-10">
-              Enter a city and niche. AI finds businesses, audits their websites, 
-              generates personalized outreach, and creates shareable reports. 
-              You just send the links.
+              Enter a website URL and get an instant AI-powered analysis of design, 
+              UX issues, and conversion opportunities. Generate shareable reports 
+              your prospects will love.
             </p>
 
-            {/* CTAs */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-              <Link
-                href="/sign-up"
-                className="btn-primary text-lg px-8 py-4 flex items-center gap-2"
-              >
-                Start Free Trial
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
-              </Link>
-              <Link
-                href="/auto"
-                className="btn-secondary text-lg px-8 py-4"
-              >
-                Try Demo
-              </Link>
+            {/* Direct URL Input */}
+            <div className="max-w-xl mx-auto mb-8">
+              <div className="flex gap-3">
+                <div className="flex-1 relative">
+                  <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                    <svg className="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                    </svg>
+                  </div>
+                  <input
+                    type="url"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleGetStarted()}
+                    placeholder="Enter any website URL..."
+                    className="w-full pl-12 pr-4 py-4 bg-[#0d0d1a] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                  />
+                </div>
+                <button
+                  onClick={handleGetStarted}
+                  disabled={loading || !url.trim()}
+                  className="btn-primary px-8 py-4 flex items-center gap-2 disabled:opacity-50"
+                >
+                  {loading ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      Analyze
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    </>
+                  )}
+                </button>
+              </div>
+              <p className="text-sm text-slate-500 mt-3">
+                Free to use · No signup required · Results in 30 seconds
+              </p>
             </div>
 
             {/* Stats */}
             <div className="grid grid-cols-3 gap-8 max-w-lg mx-auto">
               <div>
                 <div className="text-3xl font-bold text-white">30s</div>
-                <div className="text-sm text-slate-500">Per prospect</div>
+                <div className="text-sm text-slate-500">Analysis time</div>
               </div>
               <div>
-                <div className="text-3xl font-bold text-white">95%</div>
-                <div className="text-sm text-slate-500">Accuracy</div>
+                <div className="text-3xl font-bold text-white">50+</div>
+                <div className="text-sm text-slate-500">Check points</div>
               </div>
               <div>
-                <div className="text-3xl font-bold text-white">$0.10</div>
-                <div className="text-sm text-slate-500">Per audit</div>
+                <div className="text-3xl font-bold text-white">Free</div>
+                <div className="text-sm text-slate-500">No credit card</div>
               </div>
             </div>
           </div>
@@ -77,68 +113,64 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Three Steps to New Clients
+              How It Works
             </h2>
             <p className="text-slate-400 max-w-xl mx-auto">
-              Our AI handles the entire prospecting workflow from start to finish
+              Three simple steps to professional website audits
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             <StepCard
               number="01"
-              icon="🎯"
-              title="Choose Your Target"
-              description="Select any city and business niche — medical offices, restaurants, law firms, gyms, salons, and more."
+              icon={<TargetIcon />}
+              title="Enter a URL"
+              description="Paste any website URL and our AI starts analyzing immediately."
             />
             <StepCard
               number="02"
-              icon="🤖"
-              title="AI Does the Work"
-              description="Our AI finds businesses, captures screenshots, analyzes design & SEO, and writes personalized outreach."
+              icon={<ScanIcon />}
+              title="AI Analysis"
+              description="Vision AI captures screenshots and analyzes design, UX, and conversion factors."
             />
             <StepCard
               number="03"
-              icon="📤"
-              title="Send & Close"
-              description="Get shareable reports and ready-to-send emails. Just copy, paste, and start conversations."
+              icon={<ReportIcon />}
+              title="Get Your Report"
+              description="Receive a shareable report with actionable insights you can send to prospects."
             />
           </div>
         </div>
       </section>
 
-      {/* Niches */}
+      {/* Use Cases */}
       <section className="py-24 bg-[#0a0a1a]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Works for Any Service Business
+              Perfect For Any Industry
             </h2>
             <p className="text-slate-400">
-              Pre-configured niches with industry-specific audit criteria
+              Audit websites in any niche with industry-specific insights
             </p>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { icon: "🏥", name: "Medical Offices" },
-              { icon: "🦷", name: "Dental Practices" },
-              { icon: "⚖️", name: "Law Firms" },
-              { icon: "🍽️", name: "Restaurants" },
-              { icon: "💪", name: "Gyms & Fitness" },
-              { icon: "💇", name: "Salons & Spas" },
-              { icon: "🏠", name: "Real Estate" },
-              { icon: "🔧", name: "Home Services" },
-              { icon: "🐕", name: "Pet Services" },
-              { icon: "📸", name: "Photographers" },
-              { icon: "🏗️", name: "Contractors" },
-              { icon: "✨", name: "Any Niche" },
+              { icon: <MedicalIcon />, name: "Healthcare" },
+              { icon: <LegalIcon />, name: "Legal" },
+              { icon: <FoodIcon />, name: "Restaurants" },
+              { icon: <FitnessIcon />, name: "Fitness" },
+              { icon: <SalonIcon />, name: "Beauty" },
+              { icon: <HomeIcon />, name: "Real Estate" },
+              { icon: <ToolIcon />, name: "Services" },
+              { icon: <StarIcon />, name: "Any Industry" },
             ].map((niche) => (
               <div
                 key={niche.name}
                 className="card text-center py-6 hover:border-indigo-500/30"
               >
-                <div className="text-3xl mb-2">{niche.icon}</div>
+                <div className="w-10 h-10 mx-auto mb-3 text-indigo-400">{niche.icon}</div>
                 <div className="text-sm font-medium text-slate-300">{niche.name}</div>
               </div>
             ))}
@@ -152,7 +184,7 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-2 gap-16 items-center">
             <div>
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-                Vision AI Audits Every Website
+                Vision AI Audits Every Detail
               </h2>
               <p className="text-slate-400 mb-8">
                 GPT-4o analyzes actual screenshots to identify design issues, 
@@ -162,10 +194,10 @@ export default function LandingPage() {
               <ul className="space-y-4">
                 {[
                   "Screenshot-based visual analysis",
-                  "Design & UX audit (0-100 score)",
+                  "Design & UX scoring (0-100)",
                   "SEO technical audit",
-                  "Industry-specific recommendations",
-                  "Shareable PDF-style reports",
+                  "Industry-specific insights",
+                  "Shareable reports",
                 ].map((feature) => (
                   <li key={feature} className="flex items-center gap-3 text-slate-300">
                     <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center">
@@ -194,84 +226,38 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Pricing */}
-      <section className="py-24 bg-[#0a0a1a]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Simple, Transparent Pricing
-            </h2>
-            <p className="text-slate-400">
-              Start free, upgrade when you need more
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <PricingCard
-              name="Free"
-              price="$0"
-              description="Try it out"
-              features={[
-                "5 prospects/month",
-                "Design audit",
-                "Basic reports",
-                "Email templates",
-              ]}
-              cta="Get Started"
-              href="/sign-up"
-            />
-            <PricingCard
-              name="Pro"
-              price="$29"
-              description="For freelancers"
-              features={[
-                "100 prospects/month",
-                "Design + SEO audits",
-                "AI personalized emails",
-                "Branded reports",
-                "Priority support",
-              ]}
-              cta="Start Pro Trial"
-              href="/sign-up?plan=pro"
-              featured
-            />
-            <PricingCard
-              name="Agency"
-              price="$99"
-              description="For teams"
-              features={[
-                "Unlimited prospects",
-                "All Pro features",
-                "White-label reports",
-                "Team accounts",
-                "API access",
-                "Dedicated support",
-              ]}
-              cta="Contact Sales"
-              href="/contact"
-            />
-          </div>
-        </div>
-      </section>
-
       {/* CTA */}
-      <section className="py-24 border-t border-white/5">
+      <section className="py-24 bg-[#0a0a1a]">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            Ready to Find Your Next Client?
+            Ready to Audit Your First Website?
           </h2>
           <p className="text-xl text-slate-400 mb-10">
-            Join hundreds of web designers and agencies using LeadPilot to automate their prospecting.
+            Join thousands of professionals using LeadPilot to find opportunities and win new clients.
           </p>
-          <Link
-            href="/sign-up"
-            className="btn-primary text-lg px-8 py-4 inline-flex items-center gap-2"
-          >
-            Start Your Free Trial
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          </Link>
+          <div className="max-w-md mx-auto">
+            <div className="flex gap-3">
+              <input
+                type="url"
+                placeholder="Enter website URL..."
+                className="flex-1 px-4 py-4 bg-[#0d0d1a] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && e.currentTarget.value) {
+                    router.push(`/assistant?url=${encodeURIComponent(e.currentTarget.value)}`);
+                  }
+                }}
+              />
+              <Link
+                href="/assistant"
+                className="btn-primary px-8 py-4 flex items-center gap-2"
+              >
+                Get Started
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -290,7 +276,7 @@ export default function LandingPage() {
                 <span className="font-semibold text-white">LeadPilot</span>
               </div>
               <p className="text-sm text-slate-500">
-                AI-powered prospecting for web designers and agencies.
+                AI-powered website audits for professionals.
               </p>
             </div>
 
@@ -300,7 +286,7 @@ export default function LandingPage() {
               <ul className="space-y-2 text-sm text-slate-400">
                 <li><Link href="/auto" className="hover:text-white transition-colors">Auto Prospect</Link></li>
                 <li><Link href="/assistant" className="hover:text-white transition-colors">Single Audit</Link></li>
-                <li><Link href="/#pricing" className="hover:text-white transition-colors">Pricing</Link></li>
+                <li><Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link></li>
               </ul>
             </div>
 
@@ -314,13 +300,12 @@ export default function LandingPage() {
               </ul>
             </div>
 
-            {/* Monetization */}
+            {/* Partners */}
             <div>
               <h4 className="font-semibold text-white mb-4">Partners</h4>
               <ul className="space-y-2 text-sm text-slate-400">
-                <li><Link href="/advertise" className="hover:text-white transition-colors">📢 Advertise</Link></li>
-                <li><Link href="/affiliates" className="hover:text-white transition-colors">💰 Affiliates</Link></li>
-                <li><Link href="/api" className="hover:text-white transition-colors">🔌 API</Link></li>
+                <li><Link href="/advertise" className="hover:text-white transition-colors">Advertise</Link></li>
+                <li><Link href="/affiliates" className="hover:text-white transition-colors">Affiliates</Link></li>
               </ul>
             </div>
           </div>
@@ -332,7 +317,6 @@ export default function LandingPage() {
             <div className="flex items-center gap-6 text-sm text-slate-500">
               <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
               <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
-              <Link href="https://twitter.com/leadpilot" className="hover:text-white transition-colors">Twitter</Link>
             </div>
           </div>
         </div>
@@ -341,11 +325,12 @@ export default function LandingPage() {
   );
 }
 
-function StepCard({ number, icon, title, description }: { number: string; icon: string; title: string; description: string }) {
+// Step Card Component
+function StepCard({ number, icon, title, description }: { number: string; icon: React.ReactNode; title: string; description: string }) {
   return (
     <div className="card relative group">
       <div className="absolute -top-4 -left-4 text-5xl font-bold text-indigo-500/10">{number}</div>
-      <div className="text-4xl mb-4">{icon}</div>
+      <div className="w-12 h-12 mb-4 text-indigo-400">{icon}</div>
       <h3 className="text-xl font-semibold text-white mb-2">{title}</h3>
       <p className="text-slate-400">{description}</p>
     </div>
@@ -368,58 +353,96 @@ function FindingRow({ impact, text }: { impact: "critical" | "major" | "moderate
   );
 }
 
-function PricingCard({
-  name,
-  price,
-  description,
-  features,
-  cta,
-  href,
-  featured,
-}: {
-  name: string;
-  price: string;
-  description: string;
-  features: string[];
-  cta: string;
-  href: string;
-  featured?: boolean;
-}) {
+// SVG Icon Components
+function TargetIcon() {
   return (
-    <div className={`card relative ${featured ? "border-indigo-500/50 bg-gradient-to-b from-indigo-500/10 to-transparent" : ""}`}>
-      {featured && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-indigo-500 text-white text-xs font-medium rounded-full">
-          Most Popular
-        </div>
-      )}
-      <div className="text-center mb-6">
-        <div className="text-lg font-medium text-slate-400 mb-1">{name}</div>
-        <div className="text-4xl font-bold text-white mb-1">
-          {price}
-          <span className="text-lg font-normal text-slate-500">/mo</span>
-        </div>
-        <div className="text-sm text-slate-500">{description}</div>
-      </div>
-      <ul className="space-y-3 mb-8">
-        {features.map((feature) => (
-          <li key={feature} className="flex items-center gap-2 text-slate-300 text-sm">
-            <svg className="w-4 h-4 text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-            </svg>
-            {feature}
-          </li>
-        ))}
-      </ul>
-      <Link
-        href={href}
-        className={`block text-center py-3 rounded-lg font-medium transition-colors ${
-          featured
-            ? "bg-indigo-500 text-white hover:bg-indigo-600"
-            : "bg-white/5 text-white hover:bg-white/10 border border-white/10"
-        }`}
-      >
-        {cta}
-      </Link>
-    </div>
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <circle cx="12" cy="12" r="10" />
+      <circle cx="12" cy="12" r="6" />
+      <circle cx="12" cy="12" r="2" />
+    </svg>
+  );
+}
+
+function ScanIcon() {
+  return (
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2" />
+      <rect x="7" y="7" width="10" height="10" rx="1" />
+    </svg>
+  );
+}
+
+function ReportIcon() {
+  return (
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path d="M9 12h6M9 16h6M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+  );
+}
+
+function MedicalIcon() {
+  return (
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path d="M12 6v12M6 12h12" />
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+    </svg>
+  );
+}
+
+function LegalIcon() {
+  return (
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path d="M3 6l9-3 9 3M3 6v12l9 3 9-3V6M3 6l9 3 9-3M12 9v12" />
+    </svg>
+  );
+}
+
+function FoodIcon() {
+  return (
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path d="M12 3v18M4 9h16M6 3c0 3.314 2.686 6 6 6s6-2.686 6-6" />
+    </svg>
+  );
+}
+
+function FitnessIcon() {
+  return (
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path d="M4 12h2M18 12h2M6 8v8M18 8v8M8 10v4h8v-4H8z" />
+    </svg>
+  );
+}
+
+function SalonIcon() {
+  return (
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <circle cx="12" cy="8" r="5" />
+      <path d="M5 21c0-4 3-7 7-7s7 3 7 7" />
+    </svg>
+  );
+}
+
+function HomeIcon() {
+  return (
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h3v-6h6v6h3a1 1 0 001-1V10" />
+    </svg>
+  );
+}
+
+function ToolIcon() {
+  return (
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" />
+    </svg>
+  );
+}
+
+function StarIcon() {
+  return (
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+    </svg>
   );
 }
