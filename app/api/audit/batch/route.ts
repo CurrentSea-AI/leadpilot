@@ -311,14 +311,14 @@ export async function POST(request: NextRequest) {
 
     const { leadIds } = validation.data;
 
-    // Fetch leads
-    const leads = await prisma.lead.findMany({
+    // Fetch leads and filter out those without websites
+    const leadsRaw = await prisma.lead.findMany({
       where: {
         id: { in: leadIds },
-        NOT: { websiteUrl: null },
       },
       select: { id: true, websiteUrl: true },
     });
+    const leads = leadsRaw.filter((l): l is { id: string; websiteUrl: string } => l.websiteUrl !== null);
 
     if (leads.length === 0) {
       return NextResponse.json(
