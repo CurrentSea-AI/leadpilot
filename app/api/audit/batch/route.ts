@@ -1,10 +1,11 @@
 // Batch audit processing route
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { chromium, Browser } from "playwright";
 import prisma from "@/lib/prisma";
 import logger from "@/lib/logger";
 import { acquireAuditLock, releaseAuditLock } from "@/lib/audit-lock";
+import { getBrowser } from "@/lib/browser";
+import type { Browser } from "puppeteer-core";
 
 const AUDIT_TIMEOUT_MS = 20000; // 20 seconds max per audit
 
@@ -98,16 +99,13 @@ async function auditSingleLead(
     };
   }
 
-  const context = await browser.newContext({
-    userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-  });
-  context.setDefaultTimeout(AUDIT_TIMEOUT_MS - 5000); // Buffer for processing
-  const page = await context.newPage();
+  const page = await browser.newPage();
+  await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
 
   try {
     await page.goto(lead.websiteUrl, {
-      timeout: AUDIT_TIMEOUT_MS - 2000, // Leave 2s buffer
-      waitUntil: "domcontentloaded",
+      timeout: AUDIT_TIMEOUT_MS - 2000,
+      waitUntil: "domcontentloaded" as const,
     });
 
     // Parallel extraction
@@ -289,9 +287,9 @@ async function auditSingleLead(
       error: errorMessage,
     };
   } finally {
-    // Always release lock and close context
+    // Always release lock and close page
     releaseAuditLock(lead.id);
-    await context.close();
+    await page.close();
   }
 }
 
@@ -330,7 +328,7 @@ export async function POST(request: NextRequest) {
     const batchStartTime = Date.now();
 
     // Launch browser once for all audits
-    browser = await chromium.launch({ headless: true });
+    browser = await getBrowser();
 
     const results: AuditResult[] = [];
 
@@ -378,9 +376,7 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   } finally {
-    if (browser) {
-      await browser.close();
-    }
+    // Browser is reused, don't close it
   }
 }
 

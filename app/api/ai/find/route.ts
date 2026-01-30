@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { chromium, Browser } from "playwright";
 import prisma from "@/lib/prisma";
 import { normalizeWebsiteUrl } from "@/lib/normalize";
+import { getBrowser } from "@/lib/browser";
+import type { Browser } from "puppeteer-core";
 
 /**
  * AUTOMATED LEAD FINDER
@@ -32,12 +33,10 @@ async function searchGoogleMaps(
   query: string,
   limit: number
 ): Promise<FoundLead[]> {
-  const context = await browser.newContext({
-    userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    viewport: { width: 1440, height: 900 },
-  });
+  const page = await browser.newPage();
+  await page.setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+  await page.setViewport({ width: 1440, height: 900 });
   
-  const page = await context.newPage();
   const leads: FoundLead[] = [];
 
   try {
@@ -45,38 +44,34 @@ async function searchGoogleMaps(
     const searchQuery = `${query} ${location}`;
     const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(searchQuery)}`;
 
-    await page.goto(mapsUrl, { timeout: 30000, waitUntil: "networkidle" });
+    await page.goto(mapsUrl, { timeout: 30000, waitUntil: "networkidle2" });
     
     // Wait for results to load
-    await page.waitForTimeout(3000);
+    await new Promise(r => setTimeout(r, 3000));
 
     // Scroll to load more results
-    const resultsPanel = page.locator('[role="feed"]').first();
-    for (let i = 0; i < 3; i++) {
-      await resultsPanel.evaluate((el) => el.scrollBy(0, 500));
-      await page.waitForTimeout(1000);
-    }
+    await page.evaluate(() => {
+      const feed = document.querySelector('[role="feed"]');
+      if (feed) {
+        for (let i = 0; i < 3; i++) {
+          feed.scrollBy(0, 500);
+        }
+      }
+    });
+    await new Promise(r => setTimeout(r, 2000));
 
-    // Get all result items
-    const items = await page.locator('[role="feed"] > div > div > a').all();
+    // Get all result items - simplified extraction
+    const items = await page.$$('[role="feed"] > div > div > a');
     
-    for (const item of items.slice(0, limit * 2)) { // Get extra to filter
+    for (const item of items.slice(0, limit * 2)) {
       try {
-        // Click on the item to get details
         await item.click();
-        await page.waitForTimeout(2000);
+        await new Promise(r => setTimeout(r, 2000));
 
-        // Extract business info
-        const name = await page.locator('h1').first().textContent().catch(() => null);
-        
-        // Look for website link
-        const websiteLink = await page.locator('a[data-item-id="authority"]').getAttribute('href').catch(() => null);
-        
-        // Get address
-        const address = await page.locator('[data-item-id="address"] .fontBodyMedium').textContent().catch(() => null);
-        
-        // Get phone
-        const phone = await page.locator('[data-item-id^="phone"] .fontBodyMedium').textContent().catch(() => null);
+        const name = await page.$eval('h1', el => el.textContent).catch(() => null);
+        const websiteLink = await page.$eval('a[data-item-id="authority"]', el => el.getAttribute('href')).catch(() => null);
+        const address = await page.$eval('[data-item-id="address"] .fontBodyMedium', el => el.textContent).catch(() => null);
+        const phone = await page.$eval('[data-item-id^="phone"] .fontBodyMedium', el => el.textContent).catch(() => null);
 
         if (name && websiteLink && !websiteLink.includes('google.com')) {
           leads.push({
@@ -89,12 +84,11 @@ async function searchGoogleMaps(
           if (leads.length >= limit) break;
         }
       } catch {
-        // Skip this item and continue
         continue;
       }
     }
   } finally {
-    await context.close();
+    await page.close();
   }
 
   return leads;
@@ -107,11 +101,9 @@ async function searchGoogleWeb(
   query: string,
   limit: number
 ): Promise<FoundLead[]> {
-  const context = await browser.newContext({
-    userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-  });
+  const page = await browser.newPage();
+  await page.setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
   
-  const page = await context.newPage();
   const leads: FoundLead[] = [];
 
   try {
@@ -120,20 +112,17 @@ async function searchGoogleWeb(
     const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}&num=20`;
 
     await page.goto(searchUrl, { timeout: 20000, waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(2000);
+    await new Promise(r => setTimeout(r, 2000));
 
-    // Get search results
-    const results = await page.locator('#search .g').all();
+    // Get search results using evaluate
+    const results = await page.$$('#search .g');
 
     for (const result of results) {
       try {
-        const linkEl = await result.locator('a').first();
-        const href = await linkEl.getAttribute('href');
-        const titleEl = await result.locator('h3').first();
-        const title = await titleEl.textContent();
+        const href = await result.$eval('a', el => el.getAttribute('href')).catch(() => null);
+        const title = await result.$eval('h3', el => el.textContent).catch(() => null);
 
         if (href && title && href.startsWith('http') && !href.includes('google.com')) {
-          // Filter out aggregator sites
           const skipDomains = ['yelp.com', 'healthgrades.com', 'zocdoc.com', 'vitals.com', 'webmd.com', 'facebook.com', 'linkedin.com', 'youtube.com', 'wikipedia.org'];
           if (!skipDomains.some(d => href.includes(d))) {
             leads.push({
@@ -149,15 +138,13 @@ async function searchGoogleWeb(
       }
     }
   } finally {
-    await context.close();
+    await page.close();
   }
 
   return leads;
 }
 
 export async function POST(request: NextRequest) {
-  let browser: Browser | null = null;
-
   try {
     const body = await request.json();
     const validation = findSchema.safeParse(body);
@@ -171,8 +158,8 @@ export async function POST(request: NextRequest) {
 
     const { city, state, query, limit } = validation.data;
 
-    // Launch browser
-    browser = await chromium.launch({ headless: true });
+    // Get browser
+    const browser = await getBrowser();
 
     // Try Google Maps first, fall back to web search
     let leads = await searchGoogleMaps(browser, city, state, query, limit);
@@ -210,8 +197,6 @@ export async function POST(request: NextRequest) {
     console.error("Find error:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: errorMessage }, { status: 500 });
-  } finally {
-    if (browser) await browser.close();
   }
 }
 

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { chromium, Browser } from "playwright";
 import prisma from "@/lib/prisma";
 import logger from "@/lib/logger";
 import { acquireAuditLock, releaseAuditLock } from "@/lib/audit-lock";
+import { getBrowser } from "@/lib/browser";
 
 const AUDIT_TIMEOUT_MS = 20000;
 
@@ -246,7 +246,6 @@ function calculateDesignScore(findings: DesignFinding[]): number {
 }
 
 export async function POST(request: NextRequest) {
-  let browser: Browser | null = null;
   const startTime = Date.now();
   let leadId = "";
   let websiteUrl = "";
@@ -286,12 +285,9 @@ export async function POST(request: NextRequest) {
     websiteUrl = lead.websiteUrl;
     logger.auditStart(leadId, websiteUrl);
 
-    browser = await chromium.launch({ headless: true });
-    const context = await browser.newContext({
-      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    });
-    context.setDefaultTimeout(15000);
-    const page = await context.newPage();
+    const browser = await getBrowser();
+    const page = await browser.newPage();
+    await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
 
     let extracted: Extracted;
     let auditError: string | null = null;
@@ -299,7 +295,7 @@ export async function POST(request: NextRequest) {
     try {
       await page.goto(websiteUrl, {
         timeout: AUDIT_TIMEOUT_MS - 2000,
-        waitUntil: "domcontentloaded",
+        waitUntil: "domcontentloaded" as const,
       });
 
       const [
@@ -458,9 +454,6 @@ export async function POST(request: NextRequest) {
   } finally {
     if (lockAcquired && leadId) {
       releaseAuditLock(`design-${leadId}`);
-    }
-    if (browser) {
-      await browser.close();
     }
   }
 }

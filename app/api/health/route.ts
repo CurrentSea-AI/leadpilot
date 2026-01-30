@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { chromium } from "playwright";
+import { getBrowser } from "@/lib/browser";
 
 type HealthCheck = {
   name: string;
@@ -19,7 +19,7 @@ export async function GET() {
     checks.push({
       name: "database",
       status: "pass",
-      message: "SQLite database connected",
+      message: "PostgreSQL database connected",
       durationMs: Date.now() - dbStart,
     });
   } catch (error) {
@@ -53,25 +53,25 @@ export async function GET() {
     });
   }
 
-  // 3. Playwright check
+  // 3. Browser check
   const pwStart = Date.now();
   try {
-    const browser = await chromium.launch({ headless: true });
+    const browser = await getBrowser();
     const page = await browser.newPage();
     await page.goto("https://example.com", { timeout: 10000, waitUntil: "domcontentloaded" });
     const title = await page.title();
-    await browser.close();
+    await page.close();
 
     if (title.includes("Example")) {
       checks.push({
-        name: "playwright",
+        name: "browser",
         status: "pass",
         message: `Headless browser working (loaded example.com: "${title}")`,
         durationMs: Date.now() - pwStart,
       });
     } else {
       checks.push({
-        name: "playwright",
+        name: "browser",
         status: "fail",
         message: `Page loaded but unexpected title: "${title}"`,
         durationMs: Date.now() - pwStart,
@@ -79,9 +79,9 @@ export async function GET() {
     }
   } catch (error) {
     checks.push({
-      name: "playwright",
+      name: "browser",
       status: "fail",
-      message: error instanceof Error ? error.message : "Playwright test failed",
+      message: error instanceof Error ? error.message : "Browser test failed",
       durationMs: Date.now() - pwStart,
     });
   }
@@ -97,4 +97,3 @@ export async function GET() {
     { status: allPassed ? 200 : 503 }
   );
 }
-

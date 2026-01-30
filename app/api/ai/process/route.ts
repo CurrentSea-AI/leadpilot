@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { chromium, Browser } from "playwright";
 import prisma from "@/lib/prisma";
 import { getOpenAIClient } from "@/lib/openai";
 import { defaultOffer } from "@/lib/config";
 import { normalizeWebsiteUrl } from "@/lib/normalize";
+import { captureWebsite } from "@/lib/browser";
 import OpenAI from "openai";
 
 /**
@@ -185,16 +185,7 @@ Return JSON:
 }
 
 export async function POST(request: NextRequest) {
-  let browser: Browser | null = null;
-
   try {
-    if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json(
-        { error: "OpenAI API key not configured. Add OPENAI_API_KEY to .env.local" },
-        { status: 500 }
-      );
-    }
-
     const body = await request.json();
     const validation = processSchema.safeParse(body);
 
@@ -205,8 +196,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { websiteUrl: rawUrl, name: providedName, city } = validation.data;
+    const { websiteUrl: rawUrl, name: providedName, city, apiKey } = validation.data;
     const websiteUrl = normalizeWebsiteUrl(rawUrl);
+
+    // Get OpenAI client (use user's key if provided, otherwise fall back to env)
+    const openaiClient = getOpenAIClient(apiKey);
 
     // Check for existing lead
     const existingLead = await prisma.lead.findFirst({
@@ -232,25 +226,11 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Launch browser
-    browser = await chromium.launch({ headless: true });
-    const context = await browser.newContext({
-      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-      viewport: { width: 1440, height: 900 },
-    });
-    const page = await context.newPage();
-
-    // Load page
-    await page.goto(websiteUrl, { timeout: 25000, waitUntil: "networkidle" });
-    await page.waitForTimeout(2000);
-
-    // Capture data
-    const screenshotBuffer = await page.screenshot({ fullPage: false, type: "png" });
-    const screenshotBase64 = screenshotBuffer.toString("base64");
-    const pageContent = await page.$eval("body", (el) => el.textContent || "");
+    // Capture website screenshot and content
+    const { screenshotBase64, pageContent } = await captureWebsite(websiteUrl);
 
     // Run AI analysis
-    const aiResult = await runFullAIAnalysis(screenshotBase64, pageContent, websiteUrl);
+    const aiResult = await runFullAIAnalysis(screenshotBase64, pageContent, websiteUrl, openaiClient);
 
     // Create or update lead
     const leadName = providedName || aiResult.practiceInfo.suggestedName || "Unknown Practice";
@@ -309,7 +289,8 @@ export async function POST(request: NextRequest) {
       { name: lead.name, websiteUrl },
       { design: aiResult.designFindings, seo: aiResult.seoFindings },
       aiResult.practiceInfo,
-      defaultOffer
+      defaultOffer,
+      openaiClient
     );
 
     await prisma.outreachDraft.upsert({
@@ -376,8 +357,5 @@ export async function POST(request: NextRequest) {
     console.error("Process error:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: errorMessage }, { status: 500 });
-  } finally {
-    if (browser) await browser.close();
   }
 }
-

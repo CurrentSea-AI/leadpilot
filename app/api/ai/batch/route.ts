@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { chromium, Browser, BrowserContext } from "playwright";
 import prisma from "@/lib/prisma";
-import openai from "@/lib/openai";
+import { getOpenAIClient } from "@/lib/openai";
 import { defaultOffer } from "@/lib/config";
 import { normalizeWebsiteUrl } from "@/lib/normalize";
+import { getBrowser, captureWebsite } from "@/lib/browser";
 
 /**
  * BATCH PROCESSOR
@@ -61,23 +61,10 @@ type AIResult = {
 };
 
 async function analyzeWebsite(
-  context: BrowserContext,
   websiteUrl: string
 ): Promise<{ screenshot: string; content: string }> {
-  const page = await context.newPage();
-  
-  try {
-    await page.goto(websiteUrl, { timeout: 25000, waitUntil: "networkidle" });
-    await page.waitForTimeout(2000);
-    
-    const screenshotBuffer = await page.screenshot({ fullPage: false, type: "png" });
-    const screenshot = screenshotBuffer.toString("base64");
-    const content = await page.$eval("body", (el) => el.textContent || "");
-    
-    return { screenshot, content };
-  } finally {
-    await page.close();
-  }
+  const result = await captureWebsite(websiteUrl);
+  return { screenshot: result.screenshotBase64, content: result.pageContent };
 }
 
 async function runAIAnalysis(
@@ -85,7 +72,8 @@ async function runAIAnalysis(
   content: string,
   websiteUrl: string
 ): Promise<AIResult> {
-  const response = await openai.chat.completions.create({
+  const openaiClient = getOpenAIClient();
+  const response = await openaiClient.chat.completions.create({
     model: "gpt-4o",
     messages: [
       {
@@ -149,7 +137,8 @@ async function generateEmails(
 ): Promise<{ owner: { email1: string; followUp1: string; followUp2: string; dm: string }; front_desk: { email1: string; followUp1: string; followUp2: string; dm: string } }> {
   const topIssues = findings.filter(f => f.impact === "critical" || f.impact === "major").slice(0, 3);
 
-  const response = await openai.chat.completions.create({
+  const openaiClient = getOpenAIClient();
+  const response = await openaiClient.chat.completions.create({
     model: "gpt-4o-mini", // Use mini for cost efficiency in batch
     messages: [
       {
@@ -184,8 +173,6 @@ Return JSON:
 }
 
 export async function POST(request: NextRequest) {
-  let browser: Browser | null = null;
-
   try {
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json(
@@ -206,13 +193,6 @@ export async function POST(request: NextRequest) {
 
     const { leads } = validation.data;
     const results: ProcessedLead[] = [];
-
-    // Launch browser once for all leads
-    browser = await chromium.launch({ headless: true });
-    const context = await browser.newContext({
-      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-      viewport: { width: 1440, height: 900 },
-    });
 
     for (const leadInput of leads) {
       const websiteUrl = normalizeWebsiteUrl(leadInput.website);
@@ -242,7 +222,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Analyze website
-        const { screenshot, content } = await analyzeWebsite(context, websiteUrl);
+        const { screenshot, content } = await analyzeWebsite(websiteUrl);
         const aiResult = await runAIAnalysis(screenshot, content, websiteUrl);
 
         // Create or update lead
@@ -366,8 +346,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    await context.close();
-
     const successCount = results.filter(r => r.status === "success").length;
     const errorCount = results.filter(r => r.status === "error").length;
     const duplicateCount = results.filter(r => r.status === "duplicate").length;
@@ -383,8 +361,6 @@ export async function POST(request: NextRequest) {
     console.error("Batch error:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: errorMessage }, { status: 500 });
-  } finally {
-    if (browser) await browser.close();
   }
 }
 

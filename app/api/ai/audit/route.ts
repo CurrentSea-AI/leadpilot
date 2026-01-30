@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { chromium, Browser } from "playwright";
 import prisma from "@/lib/prisma";
-import openai from "@/lib/openai";
+import { getOpenAIClient } from "@/lib/openai";
+import { captureWebsite } from "@/lib/browser";
 
 const AUDIT_TIMEOUT_MS = 30000;
 
@@ -102,7 +102,8 @@ Focus on findings that would justify a $1,500-3,000 website redesign project.
 Be honest but frame issues as opportunities for improvement.
 Limit to 5-7 findings per category, prioritizing the most impactful issues.`;
 
-  const response = await openai.chat.completions.create({
+  const openaiClient = getOpenAIClient();
+  const response = await openaiClient.chat.completions.create({
     model: "gpt-4o",
     messages: [
       { role: "system", content: systemPrompt },
@@ -134,7 +135,6 @@ Limit to 5-7 findings per category, prioritizing the most impactful issues.`;
 }
 
 export async function POST(request: NextRequest) {
-  let browser: Browser | null = null;
   const startTime = Date.now();
 
   try {
@@ -168,45 +168,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Lead has no websiteUrl" }, { status: 400 });
     }
 
-    // Launch browser and take screenshot
-    browser = await chromium.launch({ headless: true });
-    const context = await browser.newContext({
-      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      viewport: { width: 1440, height: 900 },
-    });
-    context.setDefaultTimeout(15000);
-    const page = await context.newPage();
-
-    let screenshotBase64: string;
-    let pageContent: string;
-    let auditError: string | null = null;
-
-    try {
-      await page.goto(lead.websiteUrl, {
-        timeout: AUDIT_TIMEOUT_MS - 5000,
-        waitUntil: "networkidle",
-      });
-
-      // Wait a bit for any lazy-loaded content
-      await page.waitForTimeout(2000);
-
-      // Take full-page screenshot
-      const screenshotBuffer = await page.screenshot({
-        fullPage: false, // Just viewport for faster processing
-        type: "png",
-      });
-      screenshotBase64 = screenshotBuffer.toString("base64");
-
-      // Extract page content
-      pageContent = await page.$eval("body", (el) => el.textContent || "");
-    } catch (pageError) {
-      const errorMessage = pageError instanceof Error ? pageError.message : "Failed to load page";
-      auditError = errorMessage;
-      return NextResponse.json(
-        { error: `Failed to load website: ${auditError}` },
-        { status: 400 }
-      );
-    }
+    // Capture website
+    const { screenshotBase64, pageContent } = await captureWebsite(lead.websiteUrl);
 
     // Analyze with AI
     const aiResult = await analyzeWithVision(screenshotBase64, pageContent, lead.websiteUrl);
@@ -277,10 +240,5 @@ export async function POST(request: NextRequest) {
     console.error("AI Audit error:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: errorMessage }, { status: 500 });
-  } finally {
-    if (browser) {
-      await browser.close();
-    }
   }
 }
-

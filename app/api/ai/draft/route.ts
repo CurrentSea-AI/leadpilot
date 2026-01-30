@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
-import openai from "@/lib/openai";
+import { getOpenAIClient } from "@/lib/openai";
 import { defaultOffer } from "@/lib/config";
 
 const draftSchema = z.object({
@@ -121,7 +121,8 @@ Generate the following JSON with personalized emails:
 Make each email feel personally written for this specific practice. Reference their specialty, location, or unique aspects.
 Use "Hi there" or similar if no recipient name, never use brackets.`;
 
-  const response = await openai.chat.completions.create({
+  const openaiClient = getOpenAIClient();
+  const response = await openaiClient.chat.completions.create({
     model: "gpt-4o",
     messages: [
       { role: "system", content: systemPrompt },
