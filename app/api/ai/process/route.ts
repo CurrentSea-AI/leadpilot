@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { chromium, Browser } from "playwright";
 import prisma from "@/lib/prisma";
-import openai from "@/lib/openai";
+import { getOpenAIClient } from "@/lib/openai";
 import { defaultOffer } from "@/lib/config";
 import { normalizeWebsiteUrl } from "@/lib/normalize";
+import OpenAI from "openai";
 
 /**
  * FULL AUTOMATION ENDPOINT
@@ -19,6 +20,7 @@ const processSchema = z.object({
   websiteUrl: z.string().url("Valid URL required"),
   name: z.string().optional(), // Auto-inferred if not provided
   city: z.string().optional(),
+  apiKey: z.string().optional(), // User's OpenAI API key (BYOK)
 });
 
 type AuditFinding = {
@@ -58,9 +60,10 @@ type EmailVersions = {
 async function runFullAIAnalysis(
   screenshotBase64: string,
   pageContent: string,
-  websiteUrl: string
+  websiteUrl: string,
+  client: OpenAI
 ): Promise<AIAuditResult> {
-  const response = await openai.chat.completions.create({
+  const response = await client.chat.completions.create({
     model: "gpt-4o",
     messages: [
       {
@@ -123,13 +126,14 @@ async function generateEmails(
   lead: { name: string; websiteUrl: string },
   findings: { design: AuditFinding[]; seo: AuditFinding[] },
   practiceInfo: PracticeInfo,
-  offer: typeof defaultOffer
+  offer: typeof defaultOffer,
+  client: OpenAI
 ): Promise<EmailVersions> {
   const topIssues = [...findings.design, ...findings.seo]
     .filter((f) => f.impact === "critical" || f.impact === "major")
     .slice(0, 4);
 
-  const response = await openai.chat.completions.create({
+  const response = await client.chat.completions.create({
     model: "gpt-4o",
     messages: [
       {

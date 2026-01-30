@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 type ProcessResult = {
@@ -41,9 +41,23 @@ export default function AssistantPage() {
   const [result, setResult] = useState<ProcessResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [hasApiKey, setHasApiKey] = useState(false);
+
+  // Check for API key on mount
+  useEffect(() => {
+    const key = localStorage.getItem("openai_api_key");
+    setHasApiKey(!!key);
+  }, []);
 
   const processWebsite = async () => {
     if (!url.trim()) return;
+
+    // Get user's API key
+    const userApiKey = localStorage.getItem("openai_api_key");
+    if (!userApiKey) {
+      setError("Please add your OpenAI API key in Settings first");
+      return;
+    }
 
     setProcessing(true);
     setResult(null);
@@ -53,7 +67,7 @@ export default function AssistantPage() {
       const res = await fetch("/api/ai/process", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ websiteUrl: url }),
+        body: JSON.stringify({ websiteUrl: url, apiKey: userApiKey }),
       });
 
       const data = await res.json();

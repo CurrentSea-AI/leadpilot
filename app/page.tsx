@@ -1,21 +1,6 @@
-"use client";
-
 import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 export default function LandingPage() {
-  const [url, setUrl] = useState("");
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
-
-  const handleGetStarted = () => {
-    if (!url.trim()) return;
-    setLoading(true);
-    // Redirect to assistant with the URL pre-filled
-    router.push(`/assistant?url=${encodeURIComponent(url.trim())}`);
-  };
-
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -32,60 +17,60 @@ export default function LandingPage() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
               </span>
-              AI-Powered Website Audits
+              AI-Powered Lead Generation
             </div>
 
             {/* Headline */}
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
-              <span className="text-white">Audit Any Website</span>
+              <span className="text-white">Find Businesses That</span>
               <br />
-              <span className="gradient-text">In Seconds</span>
+              <span className="gradient-text">Need Your Services</span>
             </h1>
 
             {/* Subheadline */}
             <p className="text-xl text-slate-400 max-w-2xl mx-auto mb-10">
-              Enter a website URL and get an instant AI-powered analysis of design, 
-              UX issues, and conversion opportunities. Generate shareable reports 
-              your prospects will love.
+              Discover companies with outdated websites in any city and niche. 
+              AI identifies opportunities, generates personalized outreach, 
+              and helps you close more redesign clients.
             </p>
 
-            {/* Direct URL Input */}
-            <div className="max-w-xl mx-auto mb-8">
-              <div className="flex gap-3">
-                <div className="flex-1 relative">
-                  <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                    <svg className="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+            {/* Two Path CTAs */}
+            <div className="max-w-2xl mx-auto mb-8">
+              <div className="grid md:grid-cols-2 gap-4">
+                {/* Find Leads Path */}
+                <Link
+                  href="/auto"
+                  className="group card p-6 hover:border-indigo-500/50 transition-all text-left"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center mb-4 group-hover:bg-indigo-500/30 transition-colors">
+                    <svg className="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   </div>
-                  <input
-                    type="url"
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleGetStarted()}
-                    placeholder="Enter any website URL..."
-                    className="w-full pl-12 pr-4 py-4 bg-[#0d0d1a] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 transition-all"
-                  />
-                </div>
-                <button
-                  onClick={handleGetStarted}
-                  disabled={loading || !url.trim()}
-                  className="btn-primary px-8 py-4 flex items-center gap-2 disabled:opacity-50"
+                  <h3 className="text-lg font-semibold text-white mb-2">Find Leads by City</h3>
+                  <p className="text-sm text-slate-400">
+                    Enter a city and niche. AI finds businesses with outdated websites ready for a redesign.
+                  </p>
+                </Link>
+
+                {/* Single Audit Path */}
+                <Link
+                  href="/assistant"
+                  className="group card p-6 hover:border-indigo-500/50 transition-all text-left"
                 >
-                  {loading ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      Analyze
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                      </svg>
-                    </>
-                  )}
-                </button>
+                  <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center mb-4 group-hover:bg-purple-500/30 transition-colors">
+                    <svg className="w-5 h-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-2">Audit a Specific Site</h3>
+                  <p className="text-sm text-slate-400">
+                    Have a prospect in mind? Audit their site and generate a personalized report.
+                  </p>
+                </Link>
               </div>
-              <p className="text-sm text-slate-500 mt-3">
-                Free to use · No signup required · Results in 30 seconds
+              <p className="text-sm text-slate-500 mt-4 text-center">
+                Free to use · No credit card required
               </p>
             </div>
 
@@ -116,7 +101,7 @@ export default function LandingPage() {
               How It Works
             </h2>
             <p className="text-slate-400 max-w-xl mx-auto">
-              Three simple steps to professional website audits
+              From cold leads to warm conversations in three steps
             </p>
           </div>
 
@@ -124,20 +109,20 @@ export default function LandingPage() {
             <StepCard
               number="01"
               icon={<TargetIcon />}
-              title="Enter a URL"
-              description="Paste any website URL and our AI starts analyzing immediately."
+              title="Pick a City & Niche"
+              description="Choose any location and industry — dentists in Miami, restaurants in Austin, salons in LA."
             />
             <StepCard
               number="02"
               icon={<ScanIcon />}
-              title="AI Analysis"
-              description="Vision AI captures screenshots and analyzes design, UX, and conversion factors."
+              title="AI Finds Opportunities"
+              description="We scrape Google, analyze each website, and identify businesses with outdated sites."
             />
             <StepCard
               number="03"
               icon={<ReportIcon />}
-              title="Get Your Report"
-              description="Receive a shareable report with actionable insights you can send to prospects."
+              title="Send & Close"
+              description="Get personalized outreach and shareable reports. Just send the link and start conversations."
             />
           </div>
         </div>
@@ -184,20 +169,20 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-2 gap-16 items-center">
             <div>
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-                Vision AI Audits Every Detail
+                Find the Leads That Actually Convert
               </h2>
               <p className="text-slate-400 mb-8">
-                GPT-4o analyzes actual screenshots to identify design issues, 
-                UX problems, and missed conversion opportunities that 
-                rule-based tools miss.
+                Stop cold emailing random businesses. Our AI identifies companies 
+                with genuine website problems — the ones most likely to pay for 
+                your services.
               </p>
               <ul className="space-y-4">
                 {[
-                  "Screenshot-based visual analysis",
-                  "Design & UX scoring (0-100)",
-                  "SEO technical audit",
-                  "Industry-specific insights",
-                  "Shareable reports",
+                  "Automated Google search scraping",
+                  "AI-powered website scoring (0-100)",
+                  "Identifies specific problems to pitch",
+                  "Personalized email drafts generated",
+                  "Shareable reports to send prospects",
                 ].map((feature) => (
                   <li key={feature} className="flex items-center gap-3 text-slate-300">
                     <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center">
