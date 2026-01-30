@@ -87,10 +87,10 @@ function NavBar() {
           <div className="flex items-center gap-3">
             <SignedIn>
               <Link
-                href="/billing"
+                href="/settings"
                 className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition-colors"
               >
-                Billing
+                ⚙️ Settings
               </Link>
               <UserButton 
                 appearance={{
