@@ -174,15 +174,25 @@ export default function LeadsPage() {
     }
   };
 
-  const downloadReport = async (lead: Lead) => {
-    // Open report page where they can download the styled PDF
-    window.open(`/api/report?leadId=${lead.id}&type=design`, "_blank");
-    showToast("Opening report - click Download PDF button!");
-  };
-
-  const openReport = (lead: Lead) => {
-    // Open report in new tab via API
-    window.open(`/api/report?leadId=${lead.id}&type=design`, "_blank");
+  const openReport = async (lead: Lead) => {
+    // First create/get the report, then open the report page
+    try {
+      const res = await fetch("/api/report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId: lead.id, type: "design" }),
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        // Open the actual report page (not API)
+        window.open(data.url, "_blank");
+      } else {
+        showToast("Failed to generate report");
+      }
+    } catch {
+      showToast("Failed to generate report");
+    }
   };
 
   const statusColors: Record<string, string> = {
@@ -381,10 +391,10 @@ export default function LeadsPage() {
                         📄 View Report
                       </button>
                       <button
-                        onClick={() => downloadReport(lead)}
+                        onClick={() => openReport(lead)}
                         className="px-3 py-1.5 bg-slate-600 hover:bg-slate-700 text-white text-sm rounded-lg font-medium transition-colors"
                       >
-                        ⬇️ Download
+                        ⬇️ Download PDF
                       </button>
                     </>
                   )}
