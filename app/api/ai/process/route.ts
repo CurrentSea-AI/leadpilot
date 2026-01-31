@@ -63,25 +63,10 @@ async function runFullAIAnalysis(
   websiteUrl: string,
   client: OpenAI
 ): Promise<AIAuditResult> {
-  const response = await client.chat.completions.create({
-    model: "gpt-4o",
-    messages: [
-      {
-        role: "system",
-        content: `You are an expert web design and SEO auditor for medical practices. 
-Analyze websites and provide comprehensive audits that justify a web redesign project.
-Be specific - reference actual elements you see in the screenshot.
-Extract practice information to help personalize outreach.`,
-      },
-      {
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: `Analyze this medical practice website: ${websiteUrl}
+  const prompt = `Analyze this website: ${websiteUrl}
 
 PAGE CONTENT:
-${pageContent.slice(0, 6000)}
+${pageContent.slice(0, 8000)}
 
 Provide analysis as JSON:
 {
@@ -103,13 +88,33 @@ Provide analysis as JSON:
   "summary": "<2-3 sentence executive summary>"
 }
 
-Focus on 5-7 most impactful findings per category.`,
-          },
-          {
-            type: "image_url",
-            image_url: { url: `data:image/png;base64,${screenshotBase64}`, detail: "high" },
-          },
-        ],
+Focus on 5-7 most impactful findings per category.`;
+
+  // Build message content - include image only if screenshot is available
+  const userContent: Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string; detail: "high" | "low" } }> = [
+    { type: "text", text: prompt },
+  ];
+
+  if (screenshotBase64 && screenshotBase64.length > 100) {
+    userContent.push({
+      type: "image_url",
+      image_url: { url: `data:image/png;base64,${screenshotBase64}`, detail: "high" },
+    });
+  }
+
+  const response = await client.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      {
+        role: "system",
+        content: `You are an expert web design and SEO auditor. 
+Analyze websites and provide comprehensive audits that justify a web redesign project.
+Be specific and reference actual elements from the page content.
+Extract business information to help personalize outreach.`,
+      },
+      {
+        role: "user",
+        content: userContent,
       },
     ],
     response_format: { type: "json_object" },
