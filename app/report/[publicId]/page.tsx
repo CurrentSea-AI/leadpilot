@@ -277,9 +277,26 @@ export default function ReportPage({ params }: { params: Promise<{ publicId: str
                 <div className="text-xs text-slate-300">SEO Score</div>
               </div>
             )}
-            <div className="text-xs text-slate-400 ml-auto">
-              Generated {new Date(createdAt).toLocaleDateString()}
+            <div className="ml-auto flex items-center gap-3">
+              <button
+                onClick={() => window.print()}
+                className="bg-white/20 hover:bg-white/30 backdrop-blur px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+              >
+                📄 Download PDF
+              </button>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                  alert("Link copied!");
+                }}
+                className="bg-white/20 hover:bg-white/30 backdrop-blur px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+              >
+                🔗 Copy Link
+              </button>
             </div>
+          </div>
+          <div className="text-xs text-slate-400 mt-4">
+            Generated {new Date(createdAt).toLocaleDateString()}
           </div>
         </div>
       </div>
@@ -351,13 +368,32 @@ export default function ReportPage({ params }: { params: Promise<{ publicId: str
         </div>
 
         {/* Footer */}
-        <div className="mt-12 pt-8 border-t border-gray-200 text-center text-sm text-gray-500">
+        <div className="mt-12 pt-8 border-t border-gray-200 text-center text-sm text-gray-500 print:mt-8">
           <p>This report was generated automatically. Results are for informational purposes only.</p>
           <p className="mt-1">
             Report ID: {report.publicId} · Generated {new Date(createdAt).toLocaleString()}
           </p>
         </div>
       </div>
+
+      {/* Print Styles */}
+      <style jsx global>{`
+        @media print {
+          body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          .no-print {
+            display: none !important;
+          }
+          button {
+            display: none !important;
+          }
+          @page {
+            margin: 0.5in;
+          }
+        }
+      `}</style>
     </div>
   );
 }
