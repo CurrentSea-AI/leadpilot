@@ -201,9 +201,16 @@ export default function ReportPage({ params }: { params: Promise<{ publicId: str
       // Dynamically import html2pdf to avoid SSR issues
       const html2pdf = (await import("html2pdf.js")).default;
       
-      const element = reportRef.current;
+      // Clone the element and remove buttons/no-print elements
+      const element = reportRef.current.cloneNode(true) as HTMLElement;
+      
+      // Remove all elements with no-print class
+      element.querySelectorAll('.no-print').forEach(el => el.remove());
+      // Remove all buttons
+      element.querySelectorAll('button').forEach(el => el.remove());
+      
       const opt = {
-        margin: [0.5, 0.5, 0.5, 0.5],
+        margin: [0.3, 0.3, 0.3, 0.3],
         filename: `${report.lead.name.replace(/\s+/g, "_")}_Website_Audit.pdf`,
         image: { type: "jpeg", quality: 0.98 },
         html2canvas: { 
