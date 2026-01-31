@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, use, useRef } from "react";
+import dynamic from "next/dynamic";
 
 type Finding = {
   category: string;
@@ -189,6 +190,40 @@ export default function ReportPage({ params }: { params: Promise<{ publicId: str
   const [report, setReport] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
+
+  const downloadPDF = async () => {
+    if (!reportRef.current || !report) return;
+    
+    setDownloading(true);
+    try {
+      // Dynamically import html2pdf to avoid SSR issues
+      const html2pdf = (await import("html2pdf.js")).default;
+      
+      const element = reportRef.current;
+      const opt = {
+        margin: [0.5, 0.5, 0.5, 0.5],
+        filename: `${report.lead.name.replace(/\s+/g, "_")}_Website_Audit.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { 
+          scale: 2, 
+          useCORS: true,
+          logging: false,
+        },
+        jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
+        pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+      };
+
+      await html2pdf().set(opt).from(element).save();
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      // Fallback to print
+      window.print();
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   useEffect(() => {
     async function fetchReport() {
@@ -243,7 +278,7 @@ export default function ReportPage({ params }: { params: Promise<{ publicId: str
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+    <div ref={reportRef} className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
       {/* Header */}
       <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white py-12">
         <div className="max-w-4xl mx-auto px-6">
@@ -277,12 +312,13 @@ export default function ReportPage({ params }: { params: Promise<{ publicId: str
                 <div className="text-xs text-slate-300">SEO Score</div>
               </div>
             )}
-            <div className="ml-auto flex items-center gap-3">
+            <div className="ml-auto flex items-center gap-3 no-print">
               <button
-                onClick={() => window.print()}
-                className="bg-white/20 hover:bg-white/30 backdrop-blur px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                onClick={downloadPDF}
+                disabled={downloading}
+                className="bg-white/20 hover:bg-white/30 backdrop-blur px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
               >
-                📄 Download PDF
+                {downloading ? "⏳ Generating..." : "📄 Download PDF"}
               </button>
               <button
                 onClick={() => {
