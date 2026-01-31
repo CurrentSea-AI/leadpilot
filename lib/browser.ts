@@ -2,6 +2,9 @@ import puppeteer, { Browser } from "puppeteer-core";
 
 let browserInstance: Browser | null = null;
 
+// Chromium binary URL for Vercel (hosted version)
+const CHROMIUM_URL = "https://github.com/nicholasgcoles/chromium-packages/releases/download/v1.0/chromium.zip";
+
 /**
  * Get a Puppeteer browser instance that works on Vercel
  */
@@ -13,11 +16,12 @@ export async function getBrowser(): Promise<Browser> {
   const isVercel = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
 
   if (isVercel) {
-    // Running on Vercel/AWS Lambda - use @sparticuz/chromium
-    const chromium = await import("@sparticuz/chromium");
+    // Running on Vercel/AWS Lambda - use @sparticuz/chromium-min
+    const chromium = await import("@sparticuz/chromium-min");
+    
     browserInstance = await puppeteer.launch({
       args: chromium.default.args,
-      executablePath: await chromium.default.executablePath(),
+      executablePath: await chromium.default.executablePath(CHROMIUM_URL),
       headless: true,
     });
   } else {
