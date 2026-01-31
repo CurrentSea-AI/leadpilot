@@ -1,13 +1,10 @@
-// Batch audit processing route
+// Batch audit processing route - simplified for Vercel compatibility
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import logger from "@/lib/logger";
 import { acquireAuditLock, releaseAuditLock } from "@/lib/audit-lock";
-import { getBrowser } from "@/lib/browser";
-import type { Browser } from "puppeteer-core";
-
-const AUDIT_TIMEOUT_MS = 20000; // 20 seconds max per audit
+import { captureWebsite } from "@/lib/browser";
 
 const batchAuditSchema = z.object({
   leadIds: z.array(z.string()).min(1).max(10),
@@ -21,30 +18,15 @@ type AuditResult = {
   error?: string;
 };
 
-type CTA = {
-  text: string;
-  href: string | null;
-};
-
 // Medical office detection helpers
 function hasPhoneOnPage(pageText: string): boolean {
   const phoneRegex = /(\+?1?[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/;
   return phoneRegex.test(pageText);
 }
 
-function hasAppointmentCTA(links: CTA[]): boolean {
+function hasAppointmentKeywords(pageText: string): boolean {
   const keywords = ["book", "schedule", "appointment", "request appointment", "book online"];
-  return links.some((link) => {
-    const text = link.text.toLowerCase();
-    const href = link.href?.toLowerCase() || "";
-    const hasKeyword = keywords.some((kw) => text.includes(kw) || href.includes(kw));
-    const hasValidHref = link.href && !link.href.startsWith("#");
-    return hasKeyword && hasValidHref;
-  });
-}
-
-function hasClickToCall(links: CTA[]): boolean {
-  return links.some((link) => link.href?.startsWith("tel:"));
+  return keywords.some((kw) => pageText.toLowerCase().includes(kw));
 }
 
 function hasAddress(pageText: string): boolean {
@@ -76,17 +58,12 @@ function hasNewPatientInfo(pageText: string): boolean {
   return keywords.some((kw) => pageText.toLowerCase().includes(kw));
 }
 
-function hasPatientPortal(links: CTA[]): boolean {
+function hasPatientPortal(pageText: string): boolean {
   const keywords = ["patient portal", "mychart", "patient login", "my health"];
-  return links.some((link) => {
-    const text = link.text.toLowerCase();
-    const href = link.href?.toLowerCase() || "";
-    return keywords.some((kw) => text.includes(kw) || href.includes(kw));
-  });
+  return keywords.some((kw) => pageText.toLowerCase().includes(kw));
 }
 
 async function auditSingleLead(
-  browser: Browser,
   lead: { id: string; websiteUrl: string }
 ): Promise<AuditResult> {
   // Check if audit is already in progress for this lead
@@ -99,66 +76,29 @@ async function auditSingleLead(
     };
   }
 
-  const page = await browser.newPage();
-  await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
-
   try {
-    await page.goto(lead.websiteUrl, {
-      timeout: AUDIT_TIMEOUT_MS - 2000,
-      waitUntil: "domcontentloaded" as const,
-    });
-
-    // Parallel extraction
-    const [
-      title,
-      metaDescription,
-      hasViewportMeta,
-      h1,
-      allLinks,
-      pageText,
-      navItemCount,
-    ] = await Promise.all([
-      page.title(),
-      page.$eval('meta[name="description"]', (el) => el.getAttribute("content")).catch(() => null),
-      page.$eval('meta[name="viewport"]', () => true).catch(() => false),
-      page.$eval("h1", (el) => el.textContent?.trim() || null).catch(() => null),
-      page.$$eval("a", (elements) =>
-        elements.slice(0, 50).map((el) => ({
-          text: el.textContent?.trim() || "",
-          href: el.href || null,
-        }))
-      ),
-      page.$eval("body", (el) => el.textContent || ""),
-      page.$$eval("nav a, nav button, header a, header button", (els) => els.length),
-    ]);
-
-    const textContentLength = pageText.replace(/\s+/g, " ").trim().length;
+    // Fetch website content using simple fetch
+    const { pageContent, title } = await captureWebsite(lead.websiteUrl);
 
     // Run medical office checks
     const checks = {
-      hasAppointmentCTA: hasAppointmentCTA(allLinks),
-      hasClickToCall: hasClickToCall(allLinks),
-      hasPhoneVisible: hasPhoneOnPage(pageText),
-      hasAddress: hasAddress(pageText),
-      hasHours: hasHours(pageText),
-      hasInsurance: hasInsurance(pageText),
-      hasNewPatientInfo: hasNewPatientInfo(pageText),
-      hasPatientPortal: hasPatientPortal(allLinks),
-      hasViewportMeta,
+      hasAppointmentKeywords: hasAppointmentKeywords(pageContent),
+      hasPhoneVisible: hasPhoneOnPage(pageContent),
+      hasAddress: hasAddress(pageContent),
+      hasHours: hasHours(pageContent),
+      hasInsurance: hasInsurance(pageContent),
+      hasNewPatientInfo: hasNewPatientInfo(pageContent),
+      hasPatientPortal: hasPatientPortal(pageContent),
     };
 
     // Generate human-like findings (max 6)
     const findings: string[] = [];
 
-    if (!checks.hasAppointmentCTA) {
-      findings.push("No clear booking or appointment button — patients expect to schedule online.");
+    if (!checks.hasAppointmentKeywords) {
+      findings.push("No clear booking or appointment section — patients expect to schedule online.");
     }
-    if (!checks.hasClickToCall) {
-      if (checks.hasPhoneVisible) {
-        findings.push("Phone number visible but not tappable — mobile users can't click to call.");
-      } else {
-        findings.push("No phone number visible — patients can't easily contact the office.");
-      }
+    if (!checks.hasPhoneVisible) {
+      findings.push("Phone number not easily found — patients can't easily contact the office.");
     }
     if (!checks.hasAddress) {
       findings.push("Office address not clearly displayed — hurts local SEO and trust.");
@@ -175,45 +115,25 @@ async function auditSingleLead(
 
     // Calculate score based on medical office essentials
     let score = 10;
-    if (!checks.hasAppointmentCTA) score -= 2;
-    if (!checks.hasClickToCall && !checks.hasPhoneVisible) score -= 2;
-    else if (!checks.hasClickToCall) score -= 1;
+    if (!checks.hasAppointmentKeywords) score -= 2;
+    if (!checks.hasPhoneVisible) score -= 2;
     if (!checks.hasAddress) score -= 1;
     if (!checks.hasHours) score -= 1;
     if (!checks.hasInsurance) score -= 1;
     if (!checks.hasNewPatientInfo) score -= 0.5;
     if (!checks.hasPatientPortal) score -= 0.5;
-    if (!checks.hasViewportMeta) score -= 0.5;
 
     score = Math.max(1, Math.min(10, Math.round(score)));
 
     const extractedJson = JSON.stringify({
       title,
-      metaDescription,
-      h1,
-      navItemCount,
       ...checks,
-      textContentLength,
+      textContentLength: pageContent.length,
     });
 
     // Calculate confidence (1-5)
-    let confidence = 1;
-    const hasTitle = !!title && title.length > 0;
-    const hasH1 = !!h1 && h1.length > 0;
-    const ctaCount = allLinks.filter((l) => l.text.length > 0).length;
-    const hasEnoughContent = textContentLength > 200;
-
-    if (hasTitle && hasH1 && ctaCount >= 3 && hasEnoughContent) {
-      confidence = 5;
-    } else if (hasTitle && (hasH1 || ctaCount >= 2)) {
-      confidence = 4;
-    } else if (hasTitle || hasH1 || ctaCount >= 1) {
-      confidence = 3;
-    } else if (hasEnoughContent) {
-      confidence = 2;
-    } else {
-      confidence = 1;
-    }
+    const hasEnoughContent = pageContent.length > 200;
+    const confidence = hasEnoughContent ? 4 : 2;
 
     // Upsert audit
     await prisma.audit.upsert({
@@ -249,11 +169,7 @@ async function auditSingleLead(
     };
   } catch (error) {
     const rawError = error instanceof Error ? error.message : "Unknown error";
-    // Detect timeout errors specifically
-    const isTimeout = rawError.toLowerCase().includes("timeout") ||
-                      rawError.includes("Timeout") ||
-                      rawError.includes("exceeded");
-    const errorMessage = isTimeout ? "timeout" : rawError;
+    const errorMessage = rawError.includes("timeout") ? "timeout" : rawError;
 
     // Save failed audit with confidence 1
     await prisma.audit.upsert({
@@ -287,15 +203,11 @@ async function auditSingleLead(
       error: errorMessage,
     };
   } finally {
-    // Always release lock and close page
     releaseAuditLock(lead.id);
-    await page.close();
   }
 }
 
 export async function POST(request: NextRequest) {
-  let browser: Browser | null = null;
-
   try {
     const body = await request.json();
 
@@ -327,9 +239,6 @@ export async function POST(request: NextRequest) {
 
     const batchStartTime = Date.now();
 
-    // Launch browser once for all audits
-    browser = await getBrowser();
-
     const results: AuditResult[] = [];
 
     // Process sequentially to avoid overwhelming resources
@@ -339,7 +248,7 @@ export async function POST(request: NextRequest) {
       const leadStartTime = Date.now();
       logger.auditStart(lead.id, lead.websiteUrl);
 
-      const result = await auditSingleLead(browser, {
+      const result = await auditSingleLead({
         id: lead.id,
         websiteUrl: lead.websiteUrl,
       });
@@ -375,8 +284,5 @@ export async function POST(request: NextRequest) {
       { error: "Internal server error" },
       { status: 500 }
     );
-  } finally {
-    // Browser is reused, don't close it
   }
 }
-

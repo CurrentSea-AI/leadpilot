@@ -4,7 +4,7 @@ import prisma from "@/lib/prisma";
 import { getOpenAIClient } from "@/lib/openai";
 import { defaultOffer } from "@/lib/config";
 import { normalizeWebsiteUrl } from "@/lib/normalize";
-import { getBrowser, captureWebsite } from "@/lib/browser";
+import { captureWebsite } from "@/lib/browser";
 
 /**
  * BATCH PROCESSOR

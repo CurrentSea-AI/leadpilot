@@ -64,13 +64,3 @@ export async function captureWebsite(url: string): Promise<{
   }
 }
 
-/**
- * Placeholder for browser functions (not needed with fetch approach)
- */
-export async function getBrowser(): Promise<null> {
-  return null;
-}
-
-export async function closeBrowser(): Promise<void> {
-  // No-op
-}
