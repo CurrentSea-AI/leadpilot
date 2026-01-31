@@ -27,6 +27,20 @@ type DraftVersions = {
 
 type Audience = "owner" | "front_desk";
 
+// User-friendly labels for email audiences
+const AUDIENCE_LABELS = {
+  owner: {
+    name: "Decision Maker",
+    icon: "👔",
+    description: "For owners/managers who make decisions"
+  },
+  front_desk: {
+    name: "General Contact", 
+    icon: "📧",
+    description: "Shorter email for anyone at the business"
+  }
+};
+
 type ContactMethod = "EMAIL" | "CONTACT_FORM" | "IG_DM" | "PHONE" | "OTHER";
 
 const CONTACT_METHOD_LABELS: Record<ContactMethod, string> = {
@@ -281,7 +295,7 @@ export default function LeadsPage() {
       {/* Audience Toggle */}
       <div className="card p-4 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          <span className="text-sm font-medium text-slate-300">Copy emails for:</span>
+          <span className="text-sm font-medium text-slate-300">Email style:</span>
           <div className="flex rounded-lg overflow-hidden border border-white/10">
             <button
               onClick={() => setSelectedAudience("owner")}
@@ -291,7 +305,7 @@ export default function LeadsPage() {
                   : "bg-transparent text-slate-400 hover:text-white"
               }`}
             >
-              👔 Owner
+              {AUDIENCE_LABELS.owner.icon} {AUDIENCE_LABELS.owner.name}
             </button>
             <button
               onClick={() => setSelectedAudience("front_desk")}
@@ -301,13 +315,11 @@ export default function LeadsPage() {
                   : "bg-transparent text-slate-400 hover:text-white"
               }`}
             >
-              🖥️ Front Desk
+              {AUDIENCE_LABELS.front_desk.icon} {AUDIENCE_LABELS.front_desk.name}
             </button>
           </div>
           <span className="text-xs text-slate-500">
-            {selectedAudience === "owner"
-              ? "Business-focused messaging"
-              : "Shorter, operational messaging"}
+            {AUDIENCE_LABELS[selectedAudience].description}
           </span>
         </div>
       </div>
