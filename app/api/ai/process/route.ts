@@ -361,6 +361,25 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Process error:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    const errorStack = error instanceof Error ? error.stack : "";
+    
+    // Provide more helpful error messages
+    let userMessage = errorMessage;
+    if (errorMessage.includes("HTTP 404")) {
+      userMessage = "Website not found (404). Please check the URL is correct.";
+    } else if (errorMessage.includes("HTTP 403")) {
+      userMessage = "Website blocked access. Try a different website.";
+    } else if (errorMessage.includes("HTTP 5")) {
+      userMessage = "Website server error. The site may be down.";
+    } else if (errorMessage.includes("timeout")) {
+      userMessage = "Website took too long to respond. Try again or try a different site.";
+    } else if (errorMessage.includes("Could not access")) {
+      userMessage = errorMessage;
+    } else if (errorMessage.includes("ENOTFOUND") || errorMessage.includes("getaddrinfo")) {
+      userMessage = "Website domain not found. Please check the URL.";
+    }
+    
+    console.error("Error stack:", errorStack);
+    return NextResponse.json({ error: userMessage }, { status: 500 });
   }
 }

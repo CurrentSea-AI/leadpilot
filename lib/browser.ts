@@ -6,21 +6,32 @@ export async function captureWebsite(url: string): Promise<{
   pageContent: string;
   title: string;
 }> {
+  console.log(`[captureWebsite] Starting capture for: ${url}`);
+  
   try {
-    // Fetch the page HTML
+    // Fetch the page HTML with timeout
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    
     const response = await fetch(url, {
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
       },
       redirect: "follow",
+      signal: controller.signal,
     });
+    
+    clearTimeout(timeout);
 
+    console.log(`[captureWebsite] Response status: ${response.status}`);
+    
     if (!response.ok) {
-      throw new Error(`Failed to fetch: ${response.status}`);
+      throw new Error(`Website returned HTTP ${response.status}: ${response.statusText}`);
     }
 
     const html = await response.text();
+    console.log(`[captureWebsite] Fetched ${html.length} bytes of HTML`);
 
     // Extract title
     const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
@@ -39,10 +50,17 @@ export async function captureWebsite(url: string): Promise<{
     // The AI will analyze based on content only
     const screenshotBase64 = "";
 
+    console.log(`[captureWebsite] Successfully captured: ${title}`);
     return { screenshotBase64, pageContent, title };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    throw new Error(`Failed to capture website: ${message}`);
+    console.error(`[captureWebsite] Error: ${message}`);
+    
+    if (message.includes("abort")) {
+      throw new Error(`Website took too long to respond (30s timeout)`);
+    }
+    
+    throw new Error(`Could not access website: ${message}`);
   }
 }
 
