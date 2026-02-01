@@ -43,7 +43,7 @@ export default function AutoPage() {
             Find <span className="gradient-text">Prospects</span>
           </h1>
           <p className="text-lg text-slate-400 max-w-xl mx-auto">
-            Find businesses that need website redesigns. Copy their website URL → Audit with AI.
+            Search for businesses that need website redesigns. Copy their website URL and audit with AI.
           </p>
         </div>
 
