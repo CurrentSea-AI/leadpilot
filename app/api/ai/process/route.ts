@@ -42,6 +42,20 @@ type PracticeInfo = {
   suggestedName: string;
 };
 
+type ProspectAnalysis = {
+  prospectScore: number; // 1-10, how good a prospect they are
+  prospectRating: "HOT_LEAD" | "WORTH_PURSUING" | "MAYBE" | "SKIP";
+  techStack: string[]; // Detected technologies (WordPress, Wix, etc.)
+  websiteAge: "ancient" | "outdated" | "aging" | "modern" | "unknown";
+  redFlags: string[]; // Why they need a redesign
+  greenFlags: string[]; // Why they might pay/be worth pursuing
+  estimatedBusinessSize: "solo" | "small" | "medium" | "enterprise" | "unknown";
+  hasOnlineBooking: boolean;
+  hasSocialProof: boolean; // Reviews, testimonials mentioned
+  mobileOptimized: boolean;
+  recommendation: string; // Brief recommendation
+};
+
 type AIAuditResult = {
   designScore: number;
   seoScore: number;
@@ -49,6 +63,7 @@ type AIAuditResult = {
   designFindings: AuditFinding[];
   seoFindings: AuditFinding[];
   practiceInfo: PracticeInfo;
+  prospectAnalysis: ProspectAnalysis;
   summary: string;
 };
 
@@ -63,10 +78,13 @@ async function runFullAIAnalysis(
   websiteUrl: string,
   client: OpenAI
 ): Promise<AIAuditResult> {
-  const prompt = `Analyze this website: ${websiteUrl}
+  const prompt = `Analyze this website for a web design agency looking for prospects: ${websiteUrl}
 
 PAGE CONTENT:
 ${pageContent.slice(0, 8000)}
+
+You are helping a web design agency identify businesses that need website redesigns.
+Analyze both the QUALITY of their current website AND whether they're a GOOD PROSPECT.
 
 Provide analysis as JSON:
 {
@@ -85,8 +103,31 @@ Provide analysis as JSON:
     "tone": "<website tone>",
     "suggestedName": "<practice name from the website>"
   },
+  "prospectAnalysis": {
+    "prospectScore": <1-10, how good a prospect - 10 = perfect candidate for redesign>,
+    "prospectRating": "<HOT_LEAD | WORTH_PURSUING | MAYBE | SKIP>",
+    "techStack": ["<detected: WordPress, Wix, Squarespace, Web.com, GoDaddy, custom, etc.>"],
+    "websiteAge": "<ancient (10+ yrs) | outdated (5-10 yrs) | aging (2-5 yrs) | modern | unknown>",
+    "redFlags": [
+      "<specific issues that scream 'needs redesign' - e.g., 'Uses Flash', 'Not mobile responsive', 'Copyright 2018', 'Broken images', 'No HTTPS'>"
+    ],
+    "greenFlags": [
+      "<signs they might pay - e.g., 'Established business', 'Multiple locations', 'Premium services', 'Active social media mentioned'>"
+    ],
+    "estimatedBusinessSize": "<solo | small (2-10) | medium (10-50) | enterprise | unknown>",
+    "hasOnlineBooking": <true if they have any booking/scheduling>,
+    "hasSocialProof": <true if reviews/testimonials visible>,
+    "mobileOptimized": <true/false based on content clues>,
+    "recommendation": "<1-2 sentence recommendation for the sales team>"
+  },
   "summary": "<2-3 sentence executive summary>"
 }
+
+PROSPECT SCORING GUIDE:
+- 9-10: Terrible website + established business with money = HOT LEAD
+- 7-8: Outdated website + decent business indicators = WORTH PURSUING
+- 5-6: Mediocre website or unclear business = MAYBE
+- 1-4: Good website OR red flags (out of business, spam, etc.) = SKIP
 
 Focus on 5-7 most impactful findings per category.`;
 
@@ -351,6 +392,7 @@ export async function POST(request: NextRequest) {
       overallScore: aiResult.overallScore,
       summary: aiResult.summary,
       practiceInfo: aiResult.practiceInfo,
+      prospectAnalysis: aiResult.prospectAnalysis,
       reportUrl: `/report/${report.publicId}`,
       reportId: report.publicId,
       emailPreview: {

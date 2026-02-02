@@ -3,6 +3,20 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
+type ProspectAnalysis = {
+  prospectScore: number;
+  prospectRating: "HOT_LEAD" | "WORTH_PURSUING" | "MAYBE" | "SKIP";
+  techStack: string[];
+  websiteAge: string;
+  redFlags: string[];
+  greenFlags: string[];
+  estimatedBusinessSize: string;
+  hasOnlineBooking: boolean;
+  hasSocialProof: boolean;
+  mobileOptimized: boolean;
+  recommendation: string;
+};
+
 type ProcessResult = {
   status: "success" | "already_processed";
   leadId: string;
@@ -23,6 +37,7 @@ type ProcessResult = {
     specialties: string[];
     location: string | null;
   };
+  prospectAnalysis?: ProspectAnalysis;
   message?: string;
 };
 
@@ -205,6 +220,91 @@ export default function AssistantPage() {
               <div className="bg-[#1a1a2e] rounded-lg p-4 mb-6 border border-white/5">
                 <div className="text-sm font-medium text-slate-300 mb-1">AI Summary</div>
                 <div className="text-slate-400">{result.summary}</div>
+              </div>
+            )}
+
+            {/* Prospect Analysis - THE KEY INFO */}
+            {result.prospectAnalysis && (
+              <div className={`rounded-xl p-5 mb-6 border-2 ${
+                result.prospectAnalysis.prospectRating === "HOT_LEAD" 
+                  ? "bg-gradient-to-r from-red-500/20 to-orange-500/20 border-red-500/50" 
+                  : result.prospectAnalysis.prospectRating === "WORTH_PURSUING"
+                  ? "bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-green-500/50"
+                  : result.prospectAnalysis.prospectRating === "MAYBE"
+                  ? "bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border-yellow-500/50"
+                  : "bg-gradient-to-r from-slate-500/20 to-gray-500/20 border-slate-500/50"
+              }`}>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`text-4xl font-black ${
+                      result.prospectAnalysis.prospectScore >= 8 ? "text-red-400" :
+                      result.prospectAnalysis.prospectScore >= 6 ? "text-green-400" :
+                      result.prospectAnalysis.prospectScore >= 4 ? "text-yellow-400" : "text-slate-400"
+                    }`}>
+                      {result.prospectAnalysis.prospectScore}/10
+                    </div>
+                    <div>
+                      <div className="text-sm text-slate-400">Prospect Score</div>
+                      <div className={`text-lg font-bold ${
+                        result.prospectAnalysis.prospectRating === "HOT_LEAD" ? "text-red-400" :
+                        result.prospectAnalysis.prospectRating === "WORTH_PURSUING" ? "text-green-400" :
+                        result.prospectAnalysis.prospectRating === "MAYBE" ? "text-yellow-400" : "text-slate-400"
+                      }`}>
+                        {result.prospectAnalysis.prospectRating === "HOT_LEAD" ? "🔥 HOT LEAD" :
+                         result.prospectAnalysis.prospectRating === "WORTH_PURSUING" ? "✅ Worth Pursuing" :
+                         result.prospectAnalysis.prospectRating === "MAYBE" ? "⚠️ Maybe" : "⏭️ Skip"}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs text-slate-500">Tech Stack</div>
+                    <div className="text-sm text-slate-300">{result.prospectAnalysis.techStack.join(", ") || "Unknown"}</div>
+                    <div className="text-xs text-slate-500 mt-1">Website Age: {result.prospectAnalysis.websiteAge}</div>
+                  </div>
+                </div>
+
+                <div className="bg-[#0f0f23]/50 rounded-lg p-3 mb-4">
+                  <div className="text-sm font-medium text-white mb-1">💡 AI Recommendation</div>
+                  <div className="text-sm text-slate-300">{result.prospectAnalysis.recommendation}</div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  {/* Red Flags */}
+                  {result.prospectAnalysis.redFlags.length > 0 && (
+                    <div>
+                      <div className="text-xs font-medium text-red-400 mb-2">🚩 Red Flags (Why They Need Redesign)</div>
+                      <ul className="space-y-1">
+                        {result.prospectAnalysis.redFlags.slice(0, 4).map((flag, i) => (
+                          <li key={i} className="text-xs text-red-300/80 flex items-start gap-1">
+                            <span className="shrink-0">•</span>
+                            <span>{flag}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {/* Green Flags */}
+                  {result.prospectAnalysis.greenFlags.length > 0 && (
+                    <div>
+                      <div className="text-xs font-medium text-green-400 mb-2">✅ Green Flags (Why They Might Pay)</div>
+                      <ul className="space-y-1">
+                        {result.prospectAnalysis.greenFlags.slice(0, 4).map((flag, i) => (
+                          <li key={i} className="text-xs text-green-300/80 flex items-start gap-1">
+                            <span className="shrink-0">•</span>
+                            <span>{flag}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-4 mt-4 pt-3 border-t border-white/10 text-xs text-slate-500">
+                  <span>Size: {result.prospectAnalysis.estimatedBusinessSize}</span>
+                  <span>{result.prospectAnalysis.hasOnlineBooking ? "✓ Has Booking" : "✗ No Booking"}</span>
+                  <span>{result.prospectAnalysis.hasSocialProof ? "✓ Has Reviews" : "✗ No Reviews"}</span>
+                  <span>{result.prospectAnalysis.mobileOptimized ? "✓ Mobile OK" : "✗ Not Mobile"}</span>
+                </div>
               </div>
             )}
 
