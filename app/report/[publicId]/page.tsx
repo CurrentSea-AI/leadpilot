@@ -210,18 +210,19 @@ export default function ReportPage({ params }: { params: Promise<{ publicId: str
       element.querySelectorAll('button').forEach(el => el.remove());
       
       const opt = {
-        margin: [0.3, 0.3, 0.3, 0.3],
+        margin: [0.3, 0.3, 0.3, 0.3] as [number, number, number, number],
         filename: `${report.lead.name.replace(/\s+/g, "_")}_Website_Audit.pdf`,
-        image: { type: "jpeg", quality: 0.98 },
+        image: { type: "jpeg" as const, quality: 0.98 },
         html2canvas: { 
           scale: 2, 
           useCORS: true,
           logging: false,
         },
-        jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
-        pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+        jsPDF: { unit: "in" as const, format: "letter" as const, orientation: "portrait" as const },
+        pagebreak: { mode: ["avoid-all", "css", "legacy"] as const },
       };
 
+      // @ts-expect-error html2pdf types are incomplete
       await html2pdf().set(opt).from(element).save();
     } catch (err) {
       console.error("PDF generation failed:", err);
