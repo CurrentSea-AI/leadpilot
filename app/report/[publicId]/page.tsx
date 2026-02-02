@@ -127,7 +127,7 @@ export default function ReportPage({ params }: { params: Promise<{ publicId: str
 
   const topIssues = allFindings
     .filter((f) => f.impact === "critical" || f.impact === "major")
-    .slice(0, 6);
+    .slice(0, 4);
 
   const getScoreColor = (s: number) => {
     if (s >= 70) return "#22c55e";
@@ -154,59 +154,56 @@ export default function ReportPage({ params }: { params: Promise<{ publicId: str
         </button>
       </div>
 
-      {/* Single Page Report */}
-      <div ref={reportRef} className="bg-white min-h-screen" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
-        <div style={{ maxWidth: "8in", margin: "0 auto", padding: "0.5in" }}>
+      {/* Single Page Report - Compact for one page */}
+      <div ref={reportRef} className="bg-white" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
+        <div style={{ maxWidth: "7.5in", margin: "0 auto", padding: "0.3in 0.4in" }}>
           
           {/* Header */}
-          <div style={{ borderBottom: "3px solid #1e293b", paddingBottom: "16px", marginBottom: "20px" }}>
+          <div style={{ borderBottom: "2px solid #1e293b", paddingBottom: "12px", marginBottom: "14px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
-                <div style={{ fontSize: "11px", color: "#64748b", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px" }}>
+                <div style={{ fontSize: "10px", color: "#64748b", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "2px" }}>
                   Website Audit Report
                 </div>
-                <h1 style={{ fontSize: "28px", fontWeight: "bold", color: "#1e293b", margin: 0 }}>
+                <h1 style={{ fontSize: "24px", fontWeight: "bold", color: "#1e293b", margin: 0 }}>
                   {lead.name}
                 </h1>
-                <div style={{ fontSize: "13px", color: "#6366f1", marginTop: "4px" }}>
+                <div style={{ fontSize: "12px", color: "#6366f1", marginTop: "2px" }}>
                   {lead.websiteUrl.replace(/^https?:\/\//, "")}
                 </div>
               </div>
               <div style={{ textAlign: "right" }}>
                 <div style={{ 
-                  fontSize: "48px", 
+                  fontSize: "42px", 
                   fontWeight: "900", 
                   color: getScoreColor(overallScore),
                   lineHeight: 1
                 }}>
                   {overallScore}
                 </div>
-                <div style={{ fontSize: "11px", color: "#64748b", textTransform: "uppercase" }}>
+                <div style={{ fontSize: "10px", color: "#64748b", textTransform: "uppercase" }}>
                   Overall Score
-                </div>
-                <div style={{ fontSize: "12px", fontWeight: "600", color: getScoreColor(overallScore) }}>
-                  {getScoreLabel(overallScore)}
                 </div>
               </div>
             </div>
           </div>
 
           {/* Score Breakdown */}
-          <div style={{ display: "flex", gap: "16px", marginBottom: "24px" }}>
+          <div style={{ display: "flex", gap: "10px", marginBottom: "16px" }}>
             {data.designAudit && (
               <div style={{ 
                 flex: 1, 
                 backgroundColor: "#faf5ff", 
                 border: "1px solid #e9d5ff",
-                borderRadius: "8px", 
-                padding: "12px",
+                borderRadius: "6px", 
+                padding: "8px",
                 textAlign: "center"
               }}>
-                <div style={{ fontSize: "24px", fontWeight: "bold", color: "#7c3aed" }}>
+                <div style={{ fontSize: "20px", fontWeight: "bold", color: "#7c3aed" }}>
                   {data.designAudit.score}
                 </div>
-                <div style={{ fontSize: "11px", color: "#7c3aed", fontWeight: "500" }}>
-                  Design Score
+                <div style={{ fontSize: "9px", color: "#7c3aed", fontWeight: "500" }}>
+                  DESIGN
                 </div>
               </div>
             )}
@@ -215,15 +212,15 @@ export default function ReportPage({ params }: { params: Promise<{ publicId: str
                 flex: 1, 
                 backgroundColor: "#eff6ff", 
                 border: "1px solid #bfdbfe",
-                borderRadius: "8px", 
-                padding: "12px",
+                borderRadius: "6px", 
+                padding: "8px",
                 textAlign: "center"
               }}>
-                <div style={{ fontSize: "24px", fontWeight: "bold", color: "#2563eb" }}>
+                <div style={{ fontSize: "20px", fontWeight: "bold", color: "#2563eb" }}>
                   {data.seoAudit.score}
                 </div>
-                <div style={{ fontSize: "11px", color: "#2563eb", fontWeight: "500" }}>
-                  SEO Score
+                <div style={{ fontSize: "9px", color: "#2563eb", fontWeight: "500" }}>
+                  SEO
                 </div>
               </div>
             )}
@@ -231,83 +228,77 @@ export default function ReportPage({ params }: { params: Promise<{ publicId: str
               flex: 1, 
               backgroundColor: "#fef3c7", 
               border: "1px solid #fcd34d",
-              borderRadius: "8px", 
-              padding: "12px",
+              borderRadius: "6px", 
+              padding: "8px",
               textAlign: "center"
             }}>
-              <div style={{ fontSize: "24px", fontWeight: "bold", color: "#d97706" }}>
+              <div style={{ fontSize: "20px", fontWeight: "bold", color: "#d97706" }}>
                 {allFindings.length}
               </div>
-              <div style={{ fontSize: "11px", color: "#d97706", fontWeight: "500" }}>
-                Issues Found
+              <div style={{ fontSize: "9px", color: "#d97706", fontWeight: "500" }}>
+                ISSUES
               </div>
             </div>
           </div>
 
           {/* Key Issues */}
-          <div style={{ marginBottom: "24px" }}>
-            <h2 style={{ fontSize: "16px", fontWeight: "bold", color: "#1e293b", marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
-              <span>🚨</span> Priority Issues to Address
+          <div style={{ marginBottom: "14px" }}>
+            <h2 style={{ fontSize: "13px", fontWeight: "bold", color: "#1e293b", marginBottom: "8px" }}>
+              🚨 Priority Issues
             </h2>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
               {topIssues.map((issue, i) => (
                 <div key={i} style={{ 
                   backgroundColor: issue.impact === "critical" ? "#fef2f2" : "#fff7ed",
                   borderLeft: `3px solid ${issue.impact === "critical" ? "#dc2626" : "#f97316"}`,
-                  padding: "10px 12px",
-                  borderRadius: "0 6px 6px 0"
+                  padding: "6px 10px",
+                  borderRadius: "0 4px 4px 0"
                 }}>
-                  <div style={{ fontSize: "12px", fontWeight: "600", color: "#1e293b", marginBottom: "2px" }}>
+                  <div style={{ fontSize: "11px", fontWeight: "600", color: "#1e293b" }}>
                     {issue.issue}
                   </div>
-                  <div style={{ fontSize: "10px", color: "#64748b" }}>
-                    {issue.category} • {issue.impact === "critical" ? "🔴 Critical" : "🟠 Major"}
+                  <div style={{ fontSize: "9px", color: "#64748b" }}>
+                    {issue.impact === "critical" ? "🔴 Critical" : "🟠 Major"}
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Summary */}
-          <div style={{ 
-            backgroundColor: "#f8fafc", 
-            borderRadius: "8px", 
-            padding: "16px",
-            marginBottom: "24px"
-          }}>
-            <h2 style={{ fontSize: "14px", fontWeight: "bold", color: "#1e293b", marginBottom: "8px" }}>
-              📋 Summary
-            </h2>
-            <p style={{ fontSize: "13px", color: "#475569", lineHeight: "1.5", margin: 0 }}>
-              Our analysis of <strong>{lead.name}</strong>&apos;s website identified {allFindings.length} areas for improvement. 
-              {overallScore < 60 
-                ? " The current website has significant issues that are likely impacting user experience and search visibility. A professional redesign would help convert more visitors into patients."
-                : overallScore < 75
-                ? " While the site is functional, there are opportunities to improve user experience and search rankings that could increase conversions."
-                : " The website is performing reasonably well, with some minor optimizations available."}
-            </p>
-          </div>
-
-          {/* Next Steps */}
-          <div style={{ 
-            backgroundColor: "#f0fdf4", 
-            border: "2px solid #86efac",
-            borderRadius: "8px", 
-            padding: "16px",
-            marginBottom: "24px"
-          }}>
-            <h2 style={{ fontSize: "14px", fontWeight: "bold", color: "#166534", marginBottom: "10px" }}>
-              ✅ Recommended Next Steps
-            </h2>
-            <div style={{ fontSize: "12px", color: "#166534" }}>
-              <div style={{ marginBottom: "6px" }}>
-                <strong>1.</strong> Address the critical and major issues listed above
-              </div>
-              <div style={{ marginBottom: "6px" }}>
-                <strong>2.</strong> Consider a professional website redesign for maximum impact
-              </div>
-              <div>
-                <strong>3.</strong> Schedule a free consultation to discuss your options
+          {/* Summary + Next Steps Combined */}
+          <div style={{ display: "flex", gap: "12px", marginBottom: "14px" }}>
+            <div style={{ 
+              flex: 1,
+              backgroundColor: "#f8fafc", 
+              borderRadius: "6px", 
+              padding: "12px"
+            }}>
+              <h2 style={{ fontSize: "12px", fontWeight: "bold", color: "#1e293b", marginBottom: "6px" }}>
+                📋 Summary
+              </h2>
+              <p style={{ fontSize: "11px", color: "#475569", lineHeight: "1.4", margin: 0 }}>
+                We identified <strong>{allFindings.length} issues</strong> on {lead.name}&apos;s website. 
+                {overallScore < 60 
+                  ? " Significant issues are impacting conversions. A redesign is recommended."
+                  : overallScore < 75
+                  ? " There are opportunities to improve user experience and search rankings."
+                  : " Minor optimizations available."}
+              </p>
+            </div>
+            <div style={{ 
+              flex: 1,
+              backgroundColor: "#f0fdf4", 
+              border: "1px solid #86efac",
+              borderRadius: "6px", 
+              padding: "12px"
+            }}>
+              <h2 style={{ fontSize: "12px", fontWeight: "bold", color: "#166534", marginBottom: "6px" }}>
+                ✅ Next Steps
+              </h2>
+              <div style={{ fontSize: "10px", color: "#166534", lineHeight: "1.5" }}>
+                <div><strong>1.</strong> Fix critical issues above</div>
+                <div><strong>2.</strong> Consider a professional redesign</div>
+                <div><strong>3.</strong> Schedule a free consultation</div>
               </div>
             </div>
           </div>
@@ -315,20 +306,16 @@ export default function ReportPage({ params }: { params: Promise<{ publicId: str
           {/* Footer */}
           <div style={{ 
             borderTop: "1px solid #e2e8f0", 
-            paddingTop: "12px",
+            paddingTop: "8px",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center"
           }}>
-            <div style={{ fontSize: "11px", color: "#94a3b8" }}>
-              <strong style={{ color: "#64748b" }}>Website Audit Report</strong>
-              <br />
-              Prepared for {lead.name} • {new Date(createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+            <div style={{ fontSize: "10px", color: "#94a3b8" }}>
+              Prepared for <strong style={{ color: "#64748b" }}>{lead.name}</strong> • {new Date(createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
             </div>
-            <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: "28px", fontWeight: "900", color: getScoreColor(overallScore) }}>
-                {overallScore}/100
-              </div>
+            <div style={{ fontSize: "10px", color: "#94a3b8" }}>
+              Score: <strong style={{ color: getScoreColor(overallScore) }}>{overallScore}/100</strong>
             </div>
           </div>
 
