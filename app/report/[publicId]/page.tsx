@@ -222,7 +222,6 @@ export default function ReportPage({ params }: { params: Promise<{ publicId: str
         pagebreak: { mode: ["avoid-all", "css", "legacy"] as const },
       };
 
-      // @ts-expect-error html2pdf types are incomplete
       await html2pdf().set(opt).from(element).save();
     } catch (err) {
       console.error("PDF generation failed:", err);
