@@ -36,8 +36,8 @@ export default function AutoPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12">
         {/* Header */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-sm font-medium mb-6">
-            🎯 Lead Finder
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/20 text-green-300 text-sm font-medium mb-6">
+            🗺️ Google Maps Lead Finder
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
             Find <span className="gradient-text">Prospects</span>
