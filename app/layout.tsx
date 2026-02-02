@@ -5,6 +5,9 @@ import { ClerkProvider, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { AdScripts } from "@/components/ads";
 import "./globals.css";
 
+// Check if Clerk is configured
+const clerkPubKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
@@ -126,6 +129,33 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // If Clerk isn't configured, render without auth
+  if (!clerkPubKey) {
+    return (
+      <html lang="en" className="dark">
+        <head>
+          <AdScripts />
+        </head>
+        <body className={`${inter.variable} font-sans antialiased`}>
+          <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-[#0f0f23]/80 backdrop-blur-xl print:hidden">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between h-16">
+                <Logo />
+                <div className="flex items-center gap-1">
+                  <Link href="/auto" className="px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-indigo-500 to-purple-500 text-white">🚀 Auto Prospect</Link>
+                  <Link href="/assistant" className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white">Single URL</Link>
+                  <Link href="/leads" className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white">Leads</Link>
+                </div>
+                <Link href="/settings" className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white">⚙️ Settings</Link>
+              </div>
+            </div>
+          </nav>
+          <main className="pt-16 print:pt-0">{children}</main>
+        </body>
+      </html>
+    );
+  }
+
   return (
     <ClerkProvider>
       <html lang="en" className="dark">
