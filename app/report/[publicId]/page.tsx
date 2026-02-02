@@ -330,10 +330,10 @@ export default function ReportPage({ params }: { params: Promise<{ publicId: str
               <button
                 onClick={downloadPDF}
                 disabled={downloading}
-                style={{ backgroundColor: "#4f46e5" }}
-                className="hover:opacity-90 px-4 py-2 rounded-lg text-sm font-medium transition-opacity flex items-center gap-2 disabled:opacity-50"
+                style={{ backgroundColor: "#22c55e" }}
+                className="hover:opacity-90 px-5 py-3 rounded-lg text-sm font-bold transition-opacity flex items-center gap-2 disabled:opacity-50 shadow-lg"
               >
-                {downloading ? "⏳ Generating..." : "📄 Download PDF"}
+                {downloading ? "⏳ Generating PDF..." : "⬇️ Download Clean PDF"}
               </button>
               <button
                 onClick={() => {
@@ -400,24 +400,63 @@ export default function ReportPage({ params }: { params: Promise<{ publicId: str
           />
         )}
 
-        {/* CTA */}
-        <div style={{ backgroundColor: "#4f46e5" }} className="rounded-lg p-8 text-white text-center mt-10">
-          <h2 className="text-2xl font-bold mb-3">🚀 Ready to Fix These Issues?</h2>
-          <p className="text-indigo-100 mb-6 max-w-lg mx-auto">
-            We specialize in helping businesses like yours improve their online presence.
-            Let&apos;s discuss how we can help you convert more visitors into customers.
-          </p>
-          <div style={{ backgroundColor: "white", color: "#4f46e5" }} className="inline-block font-bold px-6 py-3 rounded-lg">
-            📞 Contact Us for a Free Consultation
+        {/* Next Steps Section */}
+        <div style={{ backgroundColor: "#f0fdf4", border: "2px solid #22c55e" }} className="rounded-lg p-8 mt-10">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">✅ Recommended Next Steps</h2>
+          <div className="space-y-3 text-gray-700">
+            <div className="flex items-start gap-3">
+              <span className="text-lg">1️⃣</span>
+              <div>
+                <strong>Address Critical Issues First</strong>
+                <p className="text-sm text-gray-600">Focus on items marked as critical or major impact for immediate improvement.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="text-lg">2️⃣</span>
+              <div>
+                <strong>Consider a Professional Redesign</strong>
+                <p className="text-sm text-gray-600">A modern, optimized website can significantly increase conversions and credibility.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="text-lg">3️⃣</span>
+              <div>
+                <strong>Schedule a Free Consultation</strong>
+                <p className="text-sm text-gray-600">We&apos;d love to discuss how we can help transform your online presence.</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="mt-10 pt-6 border-t-2 border-gray-200 text-center text-sm text-gray-500">
-          <p className="font-medium text-gray-600">This audit report was prepared specifically for {lead.name}</p>
-          <p className="mt-1 text-xs">
-            Report ID: {report.publicId} · Generated {new Date(createdAt).toLocaleString()}
-          </p>
+        {/* Professional Footer */}
+        <div className="mt-12 pt-8 border-t-2 border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xl">📊</span>
+                <span className="font-bold text-gray-800">Website Audit Report</span>
+              </div>
+              <p className="text-sm text-gray-500">
+                Prepared for <strong>{lead.name}</strong>
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                {new Date(createdAt).toLocaleDateString("en-US", { 
+                  year: "numeric", 
+                  month: "long", 
+                  day: "numeric" 
+                })}
+              </p>
+            </div>
+            <div className="text-right">
+              <div className="text-4xl font-black" style={{ color: overallScore >= 60 ? "#22c55e" : overallScore >= 40 ? "#f59e0b" : "#ef4444" }}>
+                {overallScore}
+              </div>
+              <div className="text-xs text-gray-500 uppercase tracking-wide">Overall Score</div>
+            </div>
+          </div>
+          <div className="mt-4 pt-4 border-t border-gray-100 text-center text-xs text-gray-400">
+            Confidential Report · ID: {report.publicId.slice(0, 8)}...
+          </div>
         </div>
       </div>
 
