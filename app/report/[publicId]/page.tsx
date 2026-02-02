@@ -32,159 +32,6 @@ type ReportData = {
   };
 };
 
-const impactColors = {
-  critical: "bg-red-600 text-white",
-  major: "bg-orange-500 text-white",
-  moderate: "bg-yellow-500 text-black",
-  minor: "bg-blue-500 text-white",
-};
-
-const impactLabels = {
-  critical: "🚨 Critical",
-  major: "⚠️ Major",
-  moderate: "📌 Moderate",
-  minor: "💡 Minor",
-};
-
-function ScoreGauge({ score, label }: { score: number; label: string }) {
-  const getScoreColor = (s: number) => {
-    if (s >= 80) return "#22c55e"; // green
-    if (s >= 60) return "#eab308"; // yellow
-    if (s >= 40) return "#f97316"; // orange
-    return "#ef4444"; // red
-  };
-
-  const getScoreLabel = (s: number) => {
-    if (s >= 80) return "Excellent";
-    if (s >= 60) return "Good";
-    if (s >= 40) return "Needs Work";
-    return "Poor";
-  };
-
-  return (
-    <div className="text-center">
-      <div className="relative w-24 h-24 mx-auto mb-2">
-        <svg className="w-24 h-24 transform -rotate-90" viewBox="0 0 100 100">
-          <circle
-            cx="50"
-            cy="50"
-            r="40"
-            fill="none"
-            stroke="#e5e7eb"
-            strokeWidth="8"
-          />
-          <circle
-            cx="50"
-            cy="50"
-            r="40"
-            fill="none"
-            stroke={getScoreColor(score)}
-            strokeWidth="8"
-            strokeDasharray={`${score * 2.51} 251`}
-            strokeLinecap="round"
-          />
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-bold" style={{ color: getScoreColor(score) }}>
-            {score}
-          </span>
-          <span className="text-[10px] text-gray-500">/100</span>
-        </div>
-      </div>
-      <div className="text-sm font-semibold text-gray-700">{label}</div>
-      <div className="text-xs" style={{ color: getScoreColor(score) }}>{getScoreLabel(score)}</div>
-    </div>
-  );
-}
-
-function FindingCard({ finding, index }: { finding: Finding; index: number }) {
-  return (
-    <div className="border-l-4 bg-white p-4 mb-3" style={{ 
-      borderLeftColor: finding.impact === "critical" ? "#dc2626" : 
-                       finding.impact === "major" ? "#f97316" : 
-                       finding.impact === "moderate" ? "#eab308" : "#3b82f6",
-      boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
-    }}>
-      <div className="flex items-start justify-between gap-3 mb-2">
-        <span className={`text-xs px-2 py-1 rounded font-bold ${impactColors[finding.impact]}`}>
-          {impactLabels[finding.impact]}
-        </span>
-        <span className="text-xs text-gray-400 uppercase tracking-wide">
-          {finding.category}
-        </span>
-      </div>
-      <h4 className="font-bold text-gray-900 text-base mb-2">{finding.issue}</h4>
-      {finding.recommendation && (
-        <div className="bg-gray-50 p-3 rounded">
-          <p className="text-sm text-gray-700">
-            <span className="font-semibold text-green-700">✓ Fix:</span>{" "}
-            {finding.recommendation}
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function AuditSection({
-  title,
-  icon,
-  audit,
-  color,
-}: {
-  title: string;
-  icon: string;
-  audit: AuditData;
-  color: string;
-}) {
-  // Normalize findings - handle both new format (objects) and legacy format (strings)
-  const findings: Finding[] = audit.findings.map((f) =>
-    typeof f === "string"
-      ? { category: "General", issue: f, impact: "major" as const, recommendation: "" }
-      : f
-  );
-
-  const criticalCount = findings.filter((f) => f.impact === "critical").length;
-  const majorCount = findings.filter((f) => f.impact === "major").length;
-
-  return (
-    <div className="mb-10">
-      {/* Section Header */}
-      <div style={{ backgroundColor: "#f1f5f9" }} className="p-4 rounded-t-lg border-b-2 border-gray-300">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">{icon}</span>
-            <div>
-              <h2 className={`text-xl font-bold ${color}`}>{title}</h2>
-              <p className="text-xs text-gray-600 mt-1">
-                {criticalCount > 0 && (
-                  <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded mr-2 font-medium">
-                    {criticalCount} critical
-                  </span>
-                )}
-                {majorCount > 0 && (
-                  <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded mr-2 font-medium">
-                    {majorCount} major
-                  </span>
-                )}
-                <span className="text-gray-500">{findings.length} total issues</span>
-              </p>
-            </div>
-          </div>
-          <ScoreGauge score={audit.score} label="Score" />
-        </div>
-      </div>
-
-      {/* Findings List */}
-      <div className="border border-t-0 border-gray-200 rounded-b-lg p-4 bg-white">
-        {findings.map((finding, i) => (
-          <FindingCard key={i} finding={finding} index={i} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export default function ReportPage({ params }: { params: Promise<{ publicId: string }> }) {
   const resolvedParams = use(params);
   const [report, setReport] = useState<ReportData | null>(null);
@@ -198,34 +45,27 @@ export default function ReportPage({ params }: { params: Promise<{ publicId: str
     
     setDownloading(true);
     try {
-      // Dynamically import html2pdf to avoid SSR issues
       const html2pdf = (await import("html2pdf.js")).default;
       
-      // Clone the element and remove buttons/no-print elements
       const element = reportRef.current.cloneNode(true) as HTMLElement;
-      
-      // Remove all elements with no-print class
       element.querySelectorAll('.no-print').forEach(el => el.remove());
-      // Remove all buttons
       element.querySelectorAll('button').forEach(el => el.remove());
       
       const opt = {
-        margin: [0.3, 0.3, 0.3, 0.3] as [number, number, number, number],
-        filename: `${report.lead.name.replace(/\s+/g, "_")}_Website_Audit.pdf`,
-        image: { type: "jpeg" as const, quality: 0.98 },
+        margin: [0.4, 0.5, 0.4, 0.5] as [number, number, number, number],
+        filename: `${report.lead.name.replace(/\s+/g, "_")}_Audit.pdf`,
+        image: { type: "jpeg" as const, quality: 0.95 },
         html2canvas: { 
           scale: 2, 
           useCORS: true,
           logging: false,
         },
         jsPDF: { unit: "in" as const, format: "letter" as const, orientation: "portrait" as const },
-        pagebreak: { mode: ["avoid-all", "css", "legacy"] as const },
       };
 
       await html2pdf().set(opt).from(element).save();
     } catch (err) {
       console.error("PDF generation failed:", err);
-      // Fallback to print
       window.print();
     } finally {
       setDownloading(false);
@@ -237,15 +77,10 @@ export default function ReportPage({ params }: { params: Promise<{ publicId: str
       try {
         const res = await fetch(`/api/report/${resolvedParams.publicId}`);
         if (!res.ok) {
-          if (res.status === 404) {
-            setError("Report not found");
-          } else {
-            setError("Failed to load report");
-          }
+          setError(res.status === 404 ? "Report not found" : "Failed to load report");
           return;
         }
-        const data = await res.json();
-        setReport(data);
+        setReport(await res.json());
       } catch {
         setError("Failed to load report");
       } finally {
@@ -258,228 +93,254 @@ export default function ReportPage({ params }: { params: Promise<{ publicId: str
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading report...</p>
-        </div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
       </div>
     );
   }
 
   if (error || !report) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-6xl mb-4">🔍</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Report Not Found</h1>
-          <p className="text-gray-600">{error || "This report may have been removed or the link is invalid."}</p>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center text-center">
+        <div>
+          <div className="text-5xl mb-4">🔍</div>
+          <h1 className="text-xl font-bold text-gray-900">Report Not Found</h1>
         </div>
       </div>
     );
   }
 
-  const { lead, data, type, createdAt } = report;
+  const { lead, data, createdAt } = report;
   const overallScore = Math.round(
     ((data.designAudit?.score || 0) + (data.seoAudit?.score || 0)) /
       (data.designAudit && data.seoAudit ? 2 : 1)
   );
 
+  // Get top issues (critical and major only, max 6)
+  const allFindings: Finding[] = [
+    ...(data.designAudit?.findings || []),
+    ...(data.seoAudit?.findings || []),
+  ].map((f) =>
+    typeof f === "string"
+      ? { category: "General", issue: f, impact: "major" as const, recommendation: "" }
+      : f
+  );
+
+  const topIssues = allFindings
+    .filter((f) => f.impact === "critical" || f.impact === "major")
+    .slice(0, 6);
+
+  const getScoreColor = (s: number) => {
+    if (s >= 70) return "#22c55e";
+    if (s >= 50) return "#f59e0b";
+    return "#ef4444";
+  };
+
+  const getScoreLabel = (s: number) => {
+    if (s >= 70) return "Good";
+    if (s >= 50) return "Needs Improvement";
+    return "Needs Attention";
+  };
+
   return (
-    <div ref={reportRef} className="min-h-screen bg-white">
-      {/* Header - Using solid colors for better PDF rendering */}
-      <div style={{ backgroundColor: "#1e293b" }} className="text-white py-10 px-6">
-        <div className="max-w-4xl mx-auto">
-          {/* Branding */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">📊</span>
-              <span className="text-lg font-bold">Website Audit Report</span>
-            </div>
-            <div className="text-xs text-slate-400">
-              Generated {new Date(createdAt).toLocaleDateString()}
+    <>
+      {/* Download Button - Fixed at top, hidden in PDF */}
+      <div className="no-print fixed top-20 right-4 z-50">
+        <button
+          onClick={downloadPDF}
+          disabled={downloading}
+          className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-bold shadow-xl flex items-center gap-2"
+        >
+          {downloading ? "⏳ Generating..." : "⬇️ Download PDF"}
+        </button>
+      </div>
+
+      {/* Single Page Report */}
+      <div ref={reportRef} className="bg-white min-h-screen" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
+        <div style={{ maxWidth: "8in", margin: "0 auto", padding: "0.5in" }}>
+          
+          {/* Header */}
+          <div style={{ borderBottom: "3px solid #1e293b", paddingBottom: "16px", marginBottom: "20px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+              <div>
+                <div style={{ fontSize: "11px", color: "#64748b", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px" }}>
+                  Website Audit Report
+                </div>
+                <h1 style={{ fontSize: "28px", fontWeight: "bold", color: "#1e293b", margin: 0 }}>
+                  {lead.name}
+                </h1>
+                <div style={{ fontSize: "13px", color: "#6366f1", marginTop: "4px" }}>
+                  {lead.websiteUrl.replace(/^https?:\/\//, "")}
+                </div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ 
+                  fontSize: "48px", 
+                  fontWeight: "900", 
+                  color: getScoreColor(overallScore),
+                  lineHeight: 1
+                }}>
+                  {overallScore}
+                </div>
+                <div style={{ fontSize: "11px", color: "#64748b", textTransform: "uppercase" }}>
+                  Overall Score
+                </div>
+                <div style={{ fontSize: "12px", fontWeight: "600", color: getScoreColor(overallScore) }}>
+                  {getScoreLabel(overallScore)}
+                </div>
+              </div>
             </div>
           </div>
-          
-          {/* Business Name */}
-          <h1 className="text-3xl md:text-4xl font-bold mb-1">{lead.name}</h1>
-          <p className="text-blue-300 text-sm mb-6">
-            {lead.websiteUrl.replace(/^https?:\/\//, "")}
-          </p>
-          
-          {/* Scores Row */}
-          <div className="flex flex-wrap items-center gap-4">
-            <div style={{ backgroundColor: "#334155" }} className="rounded-lg px-5 py-3 text-center">
-              <div className="text-4xl font-bold">{overallScore}</div>
-              <div className="text-xs text-slate-300 uppercase tracking-wide">Overall</div>
-            </div>
+
+          {/* Score Breakdown */}
+          <div style={{ display: "flex", gap: "16px", marginBottom: "24px" }}>
             {data.designAudit && (
-              <div style={{ backgroundColor: "#334155" }} className="rounded-lg px-4 py-3 text-center">
-                <div className="text-2xl font-bold">{data.designAudit.score}</div>
-                <div className="text-xs text-slate-300">Design</div>
+              <div style={{ 
+                flex: 1, 
+                backgroundColor: "#faf5ff", 
+                border: "1px solid #e9d5ff",
+                borderRadius: "8px", 
+                padding: "12px",
+                textAlign: "center"
+              }}>
+                <div style={{ fontSize: "24px", fontWeight: "bold", color: "#7c3aed" }}>
+                  {data.designAudit.score}
+                </div>
+                <div style={{ fontSize: "11px", color: "#7c3aed", fontWeight: "500" }}>
+                  Design Score
+                </div>
               </div>
             )}
             {data.seoAudit && (
-              <div style={{ backgroundColor: "#334155" }} className="rounded-lg px-4 py-3 text-center">
-                <div className="text-2xl font-bold">{data.seoAudit.score}</div>
-                <div className="text-xs text-slate-300">SEO</div>
+              <div style={{ 
+                flex: 1, 
+                backgroundColor: "#eff6ff", 
+                border: "1px solid #bfdbfe",
+                borderRadius: "8px", 
+                padding: "12px",
+                textAlign: "center"
+              }}>
+                <div style={{ fontSize: "24px", fontWeight: "bold", color: "#2563eb" }}>
+                  {data.seoAudit.score}
+                </div>
+                <div style={{ fontSize: "11px", color: "#2563eb", fontWeight: "500" }}>
+                  SEO Score
+                </div>
               </div>
             )}
-            
-            {/* Action Buttons - Hidden in PDF */}
-            <div className="ml-auto flex items-center gap-3 no-print">
-              <button
-                onClick={downloadPDF}
-                disabled={downloading}
-                style={{ backgroundColor: "#22c55e" }}
-                className="hover:opacity-90 px-5 py-3 rounded-lg text-sm font-bold transition-opacity flex items-center gap-2 disabled:opacity-50 shadow-lg"
-              >
-                {downloading ? "⏳ Generating PDF..." : "⬇️ Download Clean PDF"}
-              </button>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(window.location.href);
-                  alert("Link copied!");
-                }}
-                style={{ backgroundColor: "#475569" }}
-                className="hover:opacity-90 px-4 py-2 rounded-lg text-sm font-medium transition-opacity flex items-center gap-2"
-              >
-                🔗 Copy Link
-              </button>
+            <div style={{ 
+              flex: 1, 
+              backgroundColor: "#fef3c7", 
+              border: "1px solid #fcd34d",
+              borderRadius: "8px", 
+              padding: "12px",
+              textAlign: "center"
+            }}>
+              <div style={{ fontSize: "24px", fontWeight: "bold", color: "#d97706" }}>
+                {allFindings.length}
+              </div>
+              <div style={{ fontSize: "11px", color: "#d97706", fontWeight: "500" }}>
+                Issues Found
+              </div>
             </div>
           </div>
+
+          {/* Key Issues */}
+          <div style={{ marginBottom: "24px" }}>
+            <h2 style={{ fontSize: "16px", fontWeight: "bold", color: "#1e293b", marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
+              <span>🚨</span> Priority Issues to Address
+            </h2>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+              {topIssues.map((issue, i) => (
+                <div key={i} style={{ 
+                  backgroundColor: issue.impact === "critical" ? "#fef2f2" : "#fff7ed",
+                  borderLeft: `3px solid ${issue.impact === "critical" ? "#dc2626" : "#f97316"}`,
+                  padding: "10px 12px",
+                  borderRadius: "0 6px 6px 0"
+                }}>
+                  <div style={{ fontSize: "12px", fontWeight: "600", color: "#1e293b", marginBottom: "2px" }}>
+                    {issue.issue}
+                  </div>
+                  <div style={{ fontSize: "10px", color: "#64748b" }}>
+                    {issue.category} • {issue.impact === "critical" ? "🔴 Critical" : "🟠 Major"}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Summary */}
+          <div style={{ 
+            backgroundColor: "#f8fafc", 
+            borderRadius: "8px", 
+            padding: "16px",
+            marginBottom: "24px"
+          }}>
+            <h2 style={{ fontSize: "14px", fontWeight: "bold", color: "#1e293b", marginBottom: "8px" }}>
+              📋 Summary
+            </h2>
+            <p style={{ fontSize: "13px", color: "#475569", lineHeight: "1.5", margin: 0 }}>
+              Our analysis of <strong>{lead.name}</strong>&apos;s website identified {allFindings.length} areas for improvement. 
+              {overallScore < 60 
+                ? " The current website has significant issues that are likely impacting user experience and search visibility. A professional redesign would help convert more visitors into patients."
+                : overallScore < 75
+                ? " While the site is functional, there are opportunities to improve user experience and search rankings that could increase conversions."
+                : " The website is performing reasonably well, with some minor optimizations available."}
+            </p>
+          </div>
+
+          {/* Next Steps */}
+          <div style={{ 
+            backgroundColor: "#f0fdf4", 
+            border: "2px solid #86efac",
+            borderRadius: "8px", 
+            padding: "16px",
+            marginBottom: "24px"
+          }}>
+            <h2 style={{ fontSize: "14px", fontWeight: "bold", color: "#166534", marginBottom: "10px" }}>
+              ✅ Recommended Next Steps
+            </h2>
+            <div style={{ fontSize: "12px", color: "#166534" }}>
+              <div style={{ marginBottom: "6px" }}>
+                <strong>1.</strong> Address the critical and major issues listed above
+              </div>
+              <div style={{ marginBottom: "6px" }}>
+                <strong>2.</strong> Consider a professional website redesign for maximum impact
+              </div>
+              <div>
+                <strong>3.</strong> Schedule a free consultation to discuss your options
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div style={{ 
+            borderTop: "1px solid #e2e8f0", 
+            paddingTop: "12px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center"
+          }}>
+            <div style={{ fontSize: "11px", color: "#94a3b8" }}>
+              <strong style={{ color: "#64748b" }}>Website Audit Report</strong>
+              <br />
+              Prepared for {lead.name} • {new Date(createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontSize: "28px", fontWeight: "900", color: getScoreColor(overallScore) }}>
+                {overallScore}/100
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-4xl mx-auto px-6 py-10">
-        {/* Summary */}
-        <div style={{ backgroundColor: "#f8fafc", borderLeft: "4px solid #4f46e5" }} className="p-6 mb-10">
-          <h2 className="text-xl font-bold text-gray-900 mb-3">📋 Executive Summary</h2>
-          <p className="text-gray-700 leading-relaxed text-base">
-            We analyzed <strong>{lead.name}</strong>&apos;s website and identified{" "}
-            <strong className="text-indigo-700">
-              {(data.designAudit?.findings.length || 0) + (data.seoAudit?.findings.length || 0)} issues
-            </strong>{" "}
-            that could be improved. Your overall score of <strong className="text-indigo-700">{overallScore}/100</strong>{" "}
-            {overallScore >= 80
-              ? "shows a well-optimized website with minor improvements possible."
-              : overallScore >= 60
-              ? "indicates a functional website with several areas that need attention."
-              : overallScore >= 40
-              ? "reveals significant issues that are likely affecting your business."
-              : "highlights critical problems that require immediate attention."}
-          </p>
-          {overallScore < 70 && (
-            <div style={{ backgroundColor: "#fef3c7", borderLeft: "4px solid #f59e0b" }} className="mt-4 p-4">
-              <p className="text-amber-900 text-sm">
-                <strong>💡 Key Insight:</strong> Websites scoring below 70 typically see 30-50% fewer
-                conversions than optimized competitors. Addressing the issues below
-                could significantly improve your results.
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Design Audit */}
-        {data.designAudit && (type === "design" || type === "full") && (
-          <AuditSection
-            title="Design & User Experience"
-            icon="🎨"
-            audit={data.designAudit}
-            color="text-purple-700"
-          />
-        )}
-
-        {/* SEO Audit */}
-        {data.seoAudit && (type === "seo" || type === "full") && (
-          <AuditSection
-            title="Search Engine Optimization"
-            icon="🔍"
-            audit={data.seoAudit}
-            color="text-blue-700"
-          />
-        )}
-
-        {/* Next Steps Section */}
-        <div style={{ backgroundColor: "#f0fdf4", border: "2px solid #22c55e" }} className="rounded-lg p-8 mt-10">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">✅ Recommended Next Steps</h2>
-          <div className="space-y-3 text-gray-700">
-            <div className="flex items-start gap-3">
-              <span className="text-lg">1️⃣</span>
-              <div>
-                <strong>Address Critical Issues First</strong>
-                <p className="text-sm text-gray-600">Focus on items marked as critical or major impact for immediate improvement.</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="text-lg">2️⃣</span>
-              <div>
-                <strong>Consider a Professional Redesign</strong>
-                <p className="text-sm text-gray-600">A modern, optimized website can significantly increase conversions and credibility.</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="text-lg">3️⃣</span>
-              <div>
-                <strong>Schedule a Free Consultation</strong>
-                <p className="text-sm text-gray-600">We&apos;d love to discuss how we can help transform your online presence.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Professional Footer */}
-        <div className="mt-12 pt-8 border-t-2 border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xl">📊</span>
-                <span className="font-bold text-gray-800">Website Audit Report</span>
-              </div>
-              <p className="text-sm text-gray-500">
-                Prepared for <strong>{lead.name}</strong>
-              </p>
-              <p className="text-xs text-gray-400 mt-1">
-                {new Date(createdAt).toLocaleDateString("en-US", { 
-                  year: "numeric", 
-                  month: "long", 
-                  day: "numeric" 
-                })}
-              </p>
-            </div>
-            <div className="text-right">
-              <div className="text-4xl font-black" style={{ color: overallScore >= 60 ? "#22c55e" : overallScore >= 40 ? "#f59e0b" : "#ef4444" }}>
-                {overallScore}
-              </div>
-              <div className="text-xs text-gray-500 uppercase tracking-wide">Overall Score</div>
-            </div>
-          </div>
-          <div className="mt-4 pt-4 border-t border-gray-100 text-center text-xs text-gray-400">
-            Confidential Report · ID: {report.publicId.slice(0, 8)}...
-          </div>
-        </div>
-      </div>
-
-      {/* Print Styles */}
       <style jsx global>{`
         @media print {
-          body {
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
-          .no-print {
-            display: none !important;
-          }
-          button {
-            display: none !important;
-          }
-          @page {
-            margin: 0.5in;
-          }
+          .no-print { display: none !important; }
+          button { display: none !important; }
         }
       `}</style>
-    </div>
+    </>
   );
 }
-
-
