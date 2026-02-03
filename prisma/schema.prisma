@@ -82,6 +82,13 @@ model NicheTemplate {
   isActive        Boolean  @default(true)
 }
 
+enum ProspectRating {
+  HOT_LEAD
+  WORTH_PURSUING
+  MAYBE
+  SKIP
+}
+
 model Lead {
   id              String         @id @default(cuid())
   createdAt       DateTime       @default(now())
@@ -96,6 +103,15 @@ model Lead {
   source          String         @default("manual")
   status          Status         @default(NEW)
   recipientName   String?        // Contact person's name for personalized outreach
+  
+  // PROSPECT QUALITY - AI-determined scores
+  prospectScore   Int?           // 1-10, how good a prospect (10 = terrible website, great business)
+  prospectRating  ProspectRating? // HOT_LEAD, WORTH_PURSUING, MAYBE, SKIP
+  websiteAge      String?        // ancient, outdated, aging, modern
+  redFlags        String?        // JSON array of issues that scream "needs redesign"
+  greenFlags      String?        // JSON array of signs they might pay
+  techStack       String?        // JSON array of detected tech (WordPress, Wix, etc.)
+  
   // Outreach tracking
   lastContactedAt DateTime?      // When the lead was last contacted
   nextFollowUpAt  DateTime?      // When to follow up next

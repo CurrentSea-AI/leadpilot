@@ -63,6 +63,8 @@ type SeoAudit = {
   error: string | null;
 };
 
+type ProspectRating = "HOT_LEAD" | "WORTH_PURSUING" | "MAYBE" | "SKIP";
+
 type Lead = {
   id: string;
   createdAt: string;
@@ -77,6 +79,14 @@ type Lead = {
   nextFollowUpAt: string | null;
   contactMethod: ContactMethod | null;
   notes: string | null;
+  // Prospect Quality
+  prospectScore: number | null;
+  prospectRating: ProspectRating | null;
+  websiteAge: string | null;
+  redFlags: string | null; // JSON string
+  greenFlags: string | null; // JSON string
+  techStack: string | null; // JSON string
+  // Audits
   audit: Audit | null;
   designAudit: DesignAudit | null;
   seoAudit: SeoAudit | null;
@@ -85,6 +95,15 @@ type Lead = {
     versionsJson: string;
   } | null;
 };
+
+const PROSPECT_RATING_CONFIG: Record<ProspectRating, { label: string; emoji: string; color: string; bgColor: string }> = {
+  HOT_LEAD: { label: "Hot Lead", emoji: "🔥", color: "text-red-400", bgColor: "bg-red-500/20 border-red-500/30" },
+  WORTH_PURSUING: { label: "Worth It", emoji: "✅", color: "text-green-400", bgColor: "bg-green-500/20 border-green-500/30" },
+  MAYBE: { label: "Maybe", emoji: "🤔", color: "text-yellow-400", bgColor: "bg-yellow-500/20 border-yellow-500/30" },
+  SKIP: { label: "Skip", emoji: "❌", color: "text-slate-400", bgColor: "bg-slate-500/20 border-slate-500/30" },
+};
+
+type ProspectFilter = "all" | "hot" | "worth_pursuing" | "actionable" | "skip";
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -95,6 +114,17 @@ export default function LeadsPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newLead, setNewLead] = useState({ name: "", websiteUrl: "", city: "" });
   const [addingLead, setAddingLead] = useState(false);
+  const [prospectFilter, setProspectFilter] = useState<ProspectFilter>("actionable");
+  
+  // Filter leads by prospect quality
+  const filteredLeads = leads.filter((lead) => {
+    if (prospectFilter === "all") return true;
+    if (prospectFilter === "hot") return lead.prospectRating === "HOT_LEAD";
+    if (prospectFilter === "worth_pursuing") return lead.prospectRating === "WORTH_PURSUING";
+    if (prospectFilter === "actionable") return lead.prospectRating === "HOT_LEAD" || lead.prospectRating === "WORTH_PURSUING";
+    if (prospectFilter === "skip") return lead.prospectRating === "SKIP" || lead.prospectRating === "MAYBE";
+    return true;
+  });
 
   const showToast = (message: string) => {
     setToast(message);
@@ -238,10 +268,17 @@ export default function LeadsPage() {
   return (
     <div className="min-h-screen p-6 md:p-8 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-3xl font-bold text-white">Lead Dashboard</h1>
-          <p className="text-slate-400 mt-1">{leads.length} leads total</p>
+          <p className="text-slate-400 mt-1">
+            {filteredLeads.length} of {leads.length} leads 
+            {leads.filter(l => l.prospectRating === "HOT_LEAD").length > 0 && (
+              <span className="text-red-400 ml-2">
+                🔥 {leads.filter(l => l.prospectRating === "HOT_LEAD").length} hot leads!
+              </span>
+            )}
+          </p>
         </div>
         <div className="flex gap-3">
           <button
@@ -250,6 +287,33 @@ export default function LeadsPage() {
           >
             ➕ Add Lead
           </button>
+        </div>
+      </div>
+      
+      {/* Prospect Quality Filter */}
+      <div className="card p-4 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <span className="text-sm font-medium text-slate-300">Show prospects:</span>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { value: "actionable", label: "🎯 Worth Pursuing", count: leads.filter(l => l.prospectRating === "HOT_LEAD" || l.prospectRating === "WORTH_PURSUING").length },
+              { value: "hot", label: "🔥 Hot Only", count: leads.filter(l => l.prospectRating === "HOT_LEAD").length },
+              { value: "all", label: "📋 All", count: leads.length },
+              { value: "skip", label: "❌ Skip/Maybe", count: leads.filter(l => l.prospectRating === "SKIP" || l.prospectRating === "MAYBE").length },
+            ].map((filter) => (
+              <button
+                key={filter.value}
+                onClick={() => setProspectFilter(filter.value as ProspectFilter)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  prospectFilter === filter.value
+                    ? "bg-purple-600 text-white"
+                    : "bg-slate-700/50 text-slate-400 hover:text-white hover:bg-slate-700"
+                }`}
+              >
+                {filter.label} ({filter.count})
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -336,118 +400,174 @@ export default function LeadsPage() {
             🚀 Audit a Website
           </a>
         </div>
+      ) : filteredLeads.length === 0 ? (
+        <div className="card p-12 text-center">
+          <div className="text-4xl mb-4">🔍</div>
+          <h3 className="text-xl font-semibold text-white mb-2">No leads match this filter</h3>
+          <p className="text-slate-400 mb-4">Try selecting a different filter above</p>
+          <button
+            onClick={() => setProspectFilter("all")}
+            className="btn-primary"
+          >
+            Show All Leads
+          </button>
+        </div>
       ) : (
         <div className="space-y-4">
-          {leads.map((lead) => (
-            <div key={lead.id} className="card p-5 hover:border-white/20 transition-colors">
-              <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-                {/* Lead Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-lg font-semibold text-white truncate">{lead.name}</h3>
-                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusColors[lead.status] || ""}`}>
-                      {lead.status}
-                    </span>
+          {filteredLeads.map((lead) => {
+            const ratingConfig = lead.prospectRating ? PROSPECT_RATING_CONFIG[lead.prospectRating] : null;
+            const redFlags = lead.redFlags ? JSON.parse(lead.redFlags) : [];
+            const techStack = lead.techStack ? JSON.parse(lead.techStack) : [];
+            
+            return (
+              <div 
+                key={lead.id} 
+                className={`card p-5 transition-colors ${
+                  lead.prospectRating === "HOT_LEAD" 
+                    ? "border-red-500/30 bg-red-500/5" 
+                    : lead.prospectRating === "WORTH_PURSUING"
+                    ? "border-green-500/20"
+                    : "hover:border-white/20"
+                }`}
+              >
+                <div className="flex flex-col lg:flex-row lg:items-start gap-4">
+                  {/* Lead Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-3 mb-2">
+                      {/* Prospect Rating Badge - PROMINENT */}
+                      {ratingConfig && (
+                        <span className={`px-2.5 py-1 rounded-lg text-sm font-bold border ${ratingConfig.bgColor} ${ratingConfig.color}`}>
+                          {ratingConfig.emoji} {ratingConfig.label}
+                        </span>
+                      )}
+                      {lead.prospectScore && (
+                        <span className="text-lg font-bold text-white">
+                          {lead.prospectScore}/10
+                        </span>
+                      )}
+                      <h3 className="text-lg font-semibold text-white truncate">{lead.name}</h3>
+                    </div>
+                    
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-400 mb-3">
+                      <a
+                        href={lead.websiteUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-indigo-400 hover:text-indigo-300 truncate max-w-xs"
+                      >
+                        {lead.websiteUrl.replace("https://", "").replace("http://", "")}
+                      </a>
+                      {lead.city && <span>📍 {lead.city}</span>}
+                      {lead.websiteAge && (
+                        <span className={lead.websiteAge === "ancient" || lead.websiteAge === "outdated" ? "text-orange-400" : ""}>
+                          🕐 {lead.websiteAge} site
+                        </span>
+                      )}
+                    </div>
+                    
+                    {/* Red Flags - Show why they need redesign */}
+                    {redFlags.length > 0 && (
+                      <div className="mb-2">
+                        <span className="text-xs text-red-400 font-medium">🚩 Issues: </span>
+                        <span className="text-xs text-slate-400">
+                          {redFlags.slice(0, 3).join(" • ")}
+                          {redFlags.length > 3 && ` +${redFlags.length - 3} more`}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {/* Tech Stack */}
+                    {techStack.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {techStack.slice(0, 4).map((tech: string, i: number) => (
+                          <span key={i} className="px-2 py-0.5 bg-slate-700/50 text-slate-300 text-xs rounded">
+                            {tech}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-400">
-                    <a
-                      href={lead.websiteUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-indigo-400 hover:text-indigo-300 truncate max-w-xs"
-                    >
-                      {lead.websiteUrl.replace("https://", "").replace("http://", "")}
-                    </a>
-                    {lead.city && <span>📍 {lead.city}</span>}
-                    {lead.email && <span>✉️ {lead.email}</span>}
+
+                  {/* Scores */}
+                  <div className="flex items-center gap-4">
+                    {(lead.designAudit || lead.audit) && (
+                      <div className="text-center">
+                        <div className={`text-2xl font-bold ${
+                          (lead.designAudit?.score || (lead.audit?.score || 0) * 10) >= 70 
+                            ? "text-green-400" 
+                            : (lead.designAudit?.score || (lead.audit?.score || 0) * 10) >= 50 
+                            ? "text-yellow-400" 
+                            : "text-red-400"
+                        }`}>
+                          {lead.designAudit?.score || (lead.audit?.score || 0) * 10}
+                        </div>
+                        <div className="text-xs text-slate-500">Design</div>
+                      </div>
+                    )}
+                    {lead.seoAudit && (
+                      <div className="text-center">
+                        <div className={`text-2xl font-bold ${
+                          lead.seoAudit.score >= 70 ? "text-green-400" : 
+                          lead.seoAudit.score >= 50 ? "text-yellow-400" : "text-red-400"
+                        }`}>
+                          {lead.seoAudit.score}
+                        </div>
+                        <div className="text-xs text-slate-500">SEO</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex flex-wrap gap-2">
+                    {(lead.designAudit || lead.audit) && (
+                      <>
+                        <button
+                          onClick={() => openReport(lead)}
+                          className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg font-medium transition-colors"
+                        >
+                          📄 Report
+                        </button>
+                      </>
+                    )}
+                    {lead.outreachDraft && (
+                      <>
+                        <button
+                          onClick={() => sendEmail(lead)}
+                          className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg font-medium transition-colors"
+                        >
+                          ✉️ Send Email
+                        </button>
+                        <button
+                          onClick={() => copyEmail(lead, "email1")}
+                          className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-sm rounded-lg font-medium transition-colors"
+                        >
+                          📋 Copy
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
 
-                {/* Scores */}
-                <div className="flex items-center gap-4">
-                  {(lead.designAudit || lead.audit) && (
-                    <div className="text-center">
-                      <div className={`text-2xl font-bold ${
-                        (lead.designAudit?.score || (lead.audit?.score || 0) * 10) >= 70 
-                          ? "text-green-400" 
-                          : (lead.designAudit?.score || (lead.audit?.score || 0) * 10) >= 50 
-                          ? "text-yellow-400" 
-                          : "text-red-400"
-                      }`}>
-                        {lead.designAudit?.score || (lead.audit?.score || 0) * 10}
-                      </div>
-                      <div className="text-xs text-slate-500">Design</div>
-                    </div>
-                  )}
-                  {lead.seoAudit && (
-                    <div className="text-center">
-                      <div className={`text-2xl font-bold ${
-                        lead.seoAudit.score >= 70 ? "text-green-400" : 
-                        lead.seoAudit.score >= 50 ? "text-yellow-400" : "text-red-400"
-                      }`}>
-                        {lead.seoAudit.score}
-                      </div>
-                      <div className="text-xs text-slate-500">SEO</div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Actions */}
-                <div className="flex flex-wrap gap-2">
-                  {(lead.designAudit || lead.audit) && (
-                    <>
-                      <button
-                        onClick={() => openReport(lead)}
-                        className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg font-medium transition-colors"
-                      >
-                        📄 View Report
-                      </button>
-                      <button
-                        onClick={() => openReport(lead)}
-                        className="px-3 py-1.5 bg-slate-600 hover:bg-slate-700 text-white text-sm rounded-lg font-medium transition-colors"
-                      >
-                        ⬇️ Download PDF
-                      </button>
-                    </>
-                  )}
-                  {lead.outreachDraft && (
-                    <>
-                      <button
-                        onClick={() => sendEmail(lead)}
-                        className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg font-medium transition-colors"
-                      >
-                        ✉️ Send Email
-                      </button>
-                      <button
-                        onClick={() => copyEmail(lead, "email1")}
-                        className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-sm rounded-lg font-medium transition-colors"
-                      >
-                        📋 Copy Email
-                      </button>
-                    </>
-                  )}
-                </div>
+                {/* Follow-up info */}
+                {(lead.lastContactedAt || lead.nextFollowUpAt) && (
+                  <div className="mt-4 pt-4 border-t border-white/5 flex flex-wrap gap-4 text-sm">
+                    {lead.lastContactedAt && (
+                      <span className="text-slate-500">
+                        📅 Sent {new Date(lead.lastContactedAt).toLocaleDateString()}
+                        {lead.contactMethod && ` via ${CONTACT_METHOD_LABELS[lead.contactMethod]}`}
+                      </span>
+                    )}
+                    {lead.nextFollowUpAt && (
+                      <span className={new Date(lead.nextFollowUpAt) <= new Date() ? "text-orange-400" : "text-slate-500"}>
+                        ⏰ Follow-up {new Date(lead.nextFollowUpAt).toLocaleDateString()}
+                        {new Date(lead.nextFollowUpAt) <= new Date() && " (overdue!)"}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
-
-              {/* Follow-up info */}
-              {(lead.lastContactedAt || lead.nextFollowUpAt) && (
-                <div className="mt-4 pt-4 border-t border-white/5 flex flex-wrap gap-4 text-sm">
-                  {lead.lastContactedAt && (
-                    <span className="text-slate-500">
-                      📅 Sent {new Date(lead.lastContactedAt).toLocaleDateString()}
-                      {lead.contactMethod && ` via ${CONTACT_METHOD_LABELS[lead.contactMethod]}`}
-                    </span>
-                  )}
-                  {lead.nextFollowUpAt && (
-                    <span className={new Date(lead.nextFollowUpAt) <= new Date() ? "text-orange-400" : "text-slate-500"}>
-                      ⏰ Follow-up {new Date(lead.nextFollowUpAt).toLocaleDateString()}
-                      {new Date(lead.nextFollowUpAt) <= new Date() && " (overdue!)"}
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

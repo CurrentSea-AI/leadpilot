@@ -278,23 +278,33 @@ export async function POST(request: NextRequest) {
     // Run AI analysis
     const aiResult = await runFullAIAnalysis(screenshotBase64, pageContent, websiteUrl, openaiClient);
 
-    // Create or update lead
+    // Create or update lead with prospect analysis
     const leadName = providedName || aiResult.practiceInfo.suggestedName || "Unknown Practice";
+    const prospectData = {
+      name: leadName,
+      city: city || aiResult.practiceInfo.location,
+      status: "AUDITED" as const,
+      // Save prospect analysis directly to the lead
+      prospectScore: aiResult.prospectAnalysis?.prospectScore || null,
+      prospectRating: aiResult.prospectAnalysis?.prospectRating || null,
+      websiteAge: aiResult.prospectAnalysis?.websiteAge || null,
+      redFlags: aiResult.prospectAnalysis?.redFlags ? JSON.stringify(aiResult.prospectAnalysis.redFlags) : null,
+      greenFlags: aiResult.prospectAnalysis?.greenFlags ? JSON.stringify(aiResult.prospectAnalysis.greenFlags) : null,
+      techStack: aiResult.prospectAnalysis?.techStack ? JSON.stringify(aiResult.prospectAnalysis.techStack) : null,
+    };
     
     let lead;
     if (existingLead) {
       lead = await prisma.lead.update({
         where: { id: existingLead.id },
-        data: { name: leadName, city: city || aiResult.practiceInfo.location, status: "AUDITED" },
+        data: prospectData,
       });
     } else {
       lead = await prisma.lead.create({
         data: {
-          name: leadName,
+          ...prospectData,
           websiteUrl,
-          city: city || aiResult.practiceInfo.location,
           source: "ai_process",
-          status: "AUDITED",
         },
       });
     }

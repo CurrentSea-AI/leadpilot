@@ -103,9 +103,11 @@ export async function GET() {
         seoAudit: true,
         outreachDraft: true,
       },
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy: [
+        // Sort by prospect score (highest first = best prospects)
+        { prospectScore: "desc" },
+        { createdAt: "desc" },
+      ],
     });
 
     return NextResponse.json(leads);
