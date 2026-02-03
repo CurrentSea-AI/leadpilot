@@ -41,60 +41,36 @@ function NavBar() {
         <div className="flex items-center justify-between h-16">
           <Logo />
           
-          <SignedIn>
-            <div className="flex items-center gap-1">
-              <Link
-                href="/auto"
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:from-indigo-600 hover:to-purple-600 transition-all shadow-lg shadow-indigo-500/20"
-              >
-                🚀 Auto Prospect
-              </Link>
-              <Link
-                href="/assistant"
-                className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
-              >
-                Single URL
-              </Link>
-              <Link
-                href="/dashboard"
-                className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/leads"
-                className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
-              >
-                Leads
-              </Link>
-            </div>
-          </SignedIn>
-
-          <SignedOut>
-            <div className="flex items-center gap-1">
-              <Link
-                href="/#features"
-                className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
-              >
-                Features
-              </Link>
-              <Link
-                href="/#pricing"
-                className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
-              >
-                Pricing
-              </Link>
-            </div>
-          </SignedOut>
+          {/* Main Navigation - Always visible */}
+          <div className="flex items-center gap-1">
+            <Link
+              href="/auto"
+              className="px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:from-indigo-600 hover:to-purple-600 transition-all shadow-lg shadow-indigo-500/20"
+            >
+              🚀 Find Leads
+            </Link>
+            <Link
+              href="/assistant"
+              className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+            >
+              Single URL
+            </Link>
+            <Link
+              href="/leads"
+              className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+            >
+              Leads
+            </Link>
+            <Link
+              href="/settings"
+              className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition-colors"
+            >
+              ⚙️
+            </Link>
+          </div>
 
           <div className="flex items-center gap-3">
             <SignedIn>
-              <Link
-                href="/settings"
-                className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition-colors"
-              >
-                ⚙️ Settings
-              </Link>
               <UserButton 
                 appearance={{
                   elements: {
@@ -109,12 +85,6 @@ function NavBar() {
                 className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition-colors"
               >
                 Sign In
-              </Link>
-              <Link
-                href="/sign-up"
-                className="px-4 py-2 text-sm font-medium bg-white text-slate-900 rounded-lg hover:bg-slate-100 transition-colors"
-              >
-                Get Started
               </Link>
             </SignedOut>
           </div>
