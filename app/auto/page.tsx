@@ -186,25 +186,147 @@ export default function AutoPage() {
           </Link>
         </div>
 
+        {/* HOW TO SPOT BAD WEBSITES - Before You Audit */}
+        <div className="card p-8 bg-gradient-to-br from-red-500/10 to-orange-500/10 border-red-500/20 mb-8">
+          <h3 className="text-xl font-bold text-red-300 mb-2">🎯 How to Spot BAD Websites (Before Auditing)</h3>
+          <p className="text-slate-400 text-sm mb-6">Save time! Look for these visual cues on Google Maps BEFORE you audit:</p>
+          
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Red Flags = GOOD Prospects */}
+            <div className="bg-red-500/10 rounded-xl p-5 border border-red-500/20">
+              <div className="text-lg font-bold text-red-400 mb-3">🔥 AUDIT THESE (Bad = Good Prospect)</div>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-start gap-2 text-red-200/80">
+                  <span className="text-red-400 shrink-0">✓</span>
+                  <span><strong>No photos</strong> or blurry/old business photos on Maps</span>
+                </li>
+                <li className="flex items-start gap-2 text-red-200/80">
+                  <span className="text-red-400 shrink-0">✓</span>
+                  <span><strong>Website looks dated</strong> when you click through</span>
+                </li>
+                <li className="flex items-start gap-2 text-red-200/80">
+                  <span className="text-red-400 shrink-0">✓</span>
+                  <span>URL ends in <strong>.webs.com, .wix.com, godaddysites.com</strong></span>
+                </li>
+                <li className="flex items-start gap-2 text-red-200/80">
+                  <span className="text-red-400 shrink-0">✓</span>
+                  <span><strong>3-4 star reviews</strong> (established but struggling)</span>
+                </li>
+                <li className="flex items-start gap-2 text-red-200/80">
+                  <span className="text-red-400 shrink-0">✓</span>
+                  <span>Website has <strong>flash animations, tiny text, cluttered layout</strong></span>
+                </li>
+                <li className="flex items-start gap-2 text-red-200/80">
+                  <span className="text-red-400 shrink-0">✓</span>
+                  <span><strong>Copyright 2018</strong> or older in footer</span>
+                </li>
+                <li className="flex items-start gap-2 text-red-200/80">
+                  <span className="text-red-400 shrink-0">✓</span>
+                  <span>No <strong>HTTPS</strong> (shows &quot;Not Secure&quot;)</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Green Flags = Skip */}
+            <div className="bg-slate-500/10 rounded-xl p-5 border border-slate-500/20">
+              <div className="text-lg font-bold text-slate-400 mb-3">⏭️ SKIP THESE (Already Good)</div>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-start gap-2 text-slate-300/80">
+                  <span className="text-slate-500 shrink-0">✗</span>
+                  <span>Modern, clean website design</span>
+                </li>
+                <li className="flex items-start gap-2 text-slate-300/80">
+                  <span className="text-slate-500 shrink-0">✗</span>
+                  <span>Professional photos throughout</span>
+                </li>
+                <li className="flex items-start gap-2 text-slate-300/80">
+                  <span className="text-slate-500 shrink-0">✗</span>
+                  <span>Has online booking/scheduling</span>
+                </li>
+                <li className="flex items-start gap-2 text-slate-300/80">
+                  <span className="text-slate-500 shrink-0">✗</span>
+                  <span>Mobile-responsive (looks good on phone)</span>
+                </li>
+                <li className="flex items-start gap-2 text-slate-300/80">
+                  <span className="text-slate-500 shrink-0">✗</span>
+                  <span>Built with Squarespace, Webflow, or custom</span>
+                </li>
+                <li className="flex items-start gap-2 text-slate-300/80">
+                  <span className="text-slate-500 shrink-0">✗</span>
+                  <span>Copyright 2024/2025/2026 in footer</span>
+                </li>
+                <li className="flex items-start gap-2 text-slate-300/80">
+                  <span className="text-slate-500 shrink-0">✗</span>
+                  <span>Part of a large chain/franchise</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* What the AI Detects */}
+        <div className="card p-8 bg-gradient-to-br from-purple-500/10 to-indigo-500/10 border-purple-500/20 mb-8">
+          <h3 className="text-xl font-bold text-purple-300 mb-4">🤖 What LeadPilot AI Detects (After You Audit)</h3>
+          <p className="text-slate-400 text-sm mb-6">When you audit a URL, the AI automatically scores it and tells you:</p>
+          
+          <div className="grid md:grid-cols-4 gap-4">
+            <div className="bg-red-500/20 rounded-lg p-4 border border-red-500/30 text-center">
+              <div className="text-2xl mb-1">🔥</div>
+              <div className="text-red-400 font-bold">HOT LEAD</div>
+              <div className="text-xs text-slate-400">9-10/10 Score</div>
+              <div className="text-xs text-red-200/60 mt-2">Terrible site + established business</div>
+            </div>
+            <div className="bg-green-500/20 rounded-lg p-4 border border-green-500/30 text-center">
+              <div className="text-2xl mb-1">✅</div>
+              <div className="text-green-400 font-bold">WORTH IT</div>
+              <div className="text-xs text-slate-400">7-8/10 Score</div>
+              <div className="text-xs text-green-200/60 mt-2">Outdated site + decent business</div>
+            </div>
+            <div className="bg-yellow-500/20 rounded-lg p-4 border border-yellow-500/30 text-center">
+              <div className="text-2xl mb-1">🤔</div>
+              <div className="text-yellow-400 font-bold">MAYBE</div>
+              <div className="text-xs text-slate-400">5-6/10 Score</div>
+              <div className="text-xs text-yellow-200/60 mt-2">Mediocre site or unclear</div>
+            </div>
+            <div className="bg-slate-500/20 rounded-lg p-4 border border-slate-500/30 text-center">
+              <div className="text-2xl mb-1">⏭️</div>
+              <div className="text-slate-400 font-bold">SKIP</div>
+              <div className="text-xs text-slate-400">1-4/10 Score</div>
+              <div className="text-xs text-slate-200/60 mt-2">Good website or dead business</div>
+            </div>
+          </div>
+
+          <div className="mt-6 pt-4 border-t border-purple-500/20">
+            <div className="text-sm text-purple-300 font-medium mb-2">🚩 AI Detects Red Flags Like:</div>
+            <div className="flex flex-wrap gap-2">
+              {["Copyright 2018", "No HTTPS", "Flash content", "Not mobile-friendly", "Broken images", "GoDaddy builder", "No online booking", "Missing trust signals"].map((flag) => (
+                <span key={flag} className="px-2 py-1 bg-red-500/10 text-red-300 text-xs rounded-full border border-red-500/20">
+                  {flag}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* Pro Tips */}
         <div className="card p-8 bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-amber-500/20">
-          <h3 className="text-xl font-bold text-amber-300 mb-4">💡 Pro Tips for Finding Good Prospects</h3>
+          <h3 className="text-xl font-bold text-amber-300 mb-4">💡 Pro Tips for High Close Rates</h3>
           <ul className="space-y-3 text-amber-200/80">
             <li className="flex items-start gap-2">
               <span className="text-amber-400">✓</span>
-              <span>Look for businesses with <strong className="text-amber-200">no website listed</strong> or very old-looking sites</span>
+              <span><strong className="text-amber-200">Medical offices, dentists, and law firms</strong> have the highest close rates</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-amber-400">✓</span>
-              <span>Skip businesses using Wix/Squarespace - they usually do it themselves</span>
+              <span>Look for businesses that have been open <strong className="text-amber-200">5+ years</strong> - they have money but outdated sites</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-amber-400">✓</span>
-              <span>Focus on practices with <strong className="text-amber-200">3-5 star reviews</strong> - they&apos;re established but need help</span>
+              <span>Skip big chains - focus on <strong className="text-amber-200">independent local businesses</strong></span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-amber-400">✓</span>
-              <span>Medical offices, dentists, and law firms have the highest close rates</span>
+              <span>Each audit costs ~$0.05-0.10 - <strong className="text-amber-200">pre-screen visually first!</strong></span>
             </li>
           </ul>
         </div>
